@@ -1,0 +1,669 @@
+package com.ssakura49.sakuratinker;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.mojang.datafixers.util.Pair;
+import com.ssakura49.sakura_library.util.RegisterAccessUtil;
+//import io.redspace.ironsspellbooks.api.registry.AttributeRegistry;
+//import io.redspace.ironsspellbooks.api.spells.SchoolType;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.minecraftforge.fml.config.ModConfig.Type;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.registries.ForgeRegistries;
+
+public class STConfig {
+   private static final Path CONFIG_PATH;
+   private static final String DEFAULT_JSON_PATH = "/data/sakuratinker/config/treasure_modifier.json";
+   //private static final Path SCHOOL_ATTR_PATH;
+   private static final String DEFAULT_SCHOOL_ATTR_PATH = "/data/sakuratinker/config/school_attributes.json";
+
+   public static void registerAll(ModLoadingContext context) {
+      context.registerConfig(Type.COMMON, STConfig.Common.SPEC);
+      context.registerConfig(Type.CLIENT, STConfig.Client.SPEC);
+      context.registerConfig(Type.SERVER, STConfig.Server.SPEC);
+   }
+
+   private static Supplier<Item> getConfiguredItem(ForgeConfigSpec.ConfigValue<String> config, Supplier<Item> fallback) {
+      return () -> {
+         try {
+            String id = (String)config.get();
+            Item item = (Item)ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(id));
+            return item != null ? item : (Item)fallback.get();
+         } catch (Exception e) {
+            SakuraTinker.LOGGER.error("配置中物品ID无效: {}", config.get(), e);
+            return (Item)fallback.get();
+         }
+      };
+   }
+
+   public static Supplier<Item> slime_crystal_earth() {
+      return getConfiguredItem(STConfig.Common.SLIME_CRYSTAL_EARTH, () -> (Item)ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("sakuratinker", "slime_crystal_earth")));
+   }
+
+   public static Supplier<Item> slime_crystal_sky() {
+      return getConfiguredItem(STConfig.Common.SLIME_CRYSTAL_SKY, () -> (Item)ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("sakuratinker", "slime_crystal_sky")));
+   }
+
+   public static Supplier<Item> slime_crystal_nether() {
+      return getConfiguredItem(STConfig.Common.SLIME_CRYSTAL_NETHER, () -> (Item)ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("sakuratinker", "slime_crystal_nether")));
+   }
+
+   public static Supplier<Item> getGoldBlock() {
+      return getConfiguredItem(STConfig.Common.GOLD_BLOCK_ITEM, () -> Items.GOLD_BLOCK);
+   }
+
+   public static boolean allowMultipleCharms() {
+      return (Boolean)STConfig.Common.CHARMS_ALLOW_MULTIPLE.get();
+   }
+
+   public static boolean isBlacklisted(MobEffect effect, RegistryAccess registryAccess) {
+      if (effect != null && registryAccess != null) {
+         ResourceLocation id = RegisterAccessUtil.getMobEffectId(registryAccess, effect);
+         if (id == null) {
+            SakuraTinker.LOGGER.warn("MobEffect 未注册，跳过黑名单判断: {}", effect);
+            return false;
+         } else {
+            return STConfig.Common.jinxDollBlackList.contains(id.toString());
+         }
+      } else {
+         return false;
+      }
+   }
+
+   public static boolean isValidDimension(ResourceLocation dimId) {
+      return STConfig.Common.TREASURE_CONFIG.dimensions.contains(dimId.toString());
+   }
+
+   public static int getEnergyValueFromJson(ResourceLocation entityId, ResourceLocation dimId) {
+      return (Integer)STConfig.Common.energyValueCache.getOrDefault(Pair.of(entityId, dimId), 0);
+   }
+
+   public static int getCapacityFromJson(ResourceLocation dimId) {
+      return (Integer)STConfig.Common.capacityCache.getOrDefault(dimId, 0);
+   }
+
+   public static List<TreasureModifierConfig.LootTableEntry> getLootTablesForDimension(ResourceLocation dim) {
+      return (List)STConfig.Common.dimensionLootTablesMap.getOrDefault(dim, List.of());
+   }
+
+   public static int getLootTableCost(ResourceLocation lootTable) {
+      return (Integer)STConfig.Common.lootTableEnergyCostMap.getOrDefault(lootTable, 0);
+   }
+
+   public static void rebuildTreasureConfigCache(TreasureModifierConfig config) {
+      STConfig.Common.energyValueCache.clear();
+
+      for(TreasureModifierConfig.EntityEnergyConfig e : config.entity_energy_values) {
+         STConfig.Common.energyValueCache.put(Pair.of(ResourceLocation.parse(e.entity), ResourceLocation.parse(e.dimension)), e.value);
+      }
+
+      STConfig.Common.capacityCache.clear();
+
+      for(TreasureModifierConfig.DimensionCapacityConfig c : config.dimension_capacities) {
+         STConfig.Common.capacityCache.put(ResourceLocation.parse(c.dimension), c.capacity);
+      }
+
+      STConfig.Common.dimensionLootTablesMap.clear();
+      STConfig.Common.lootTableEnergyCostMap.clear();
+
+      for(TreasureModifierConfig.DimensionLootTableConfig dimLoot : config.dimension_loot_tables) {
+         ResourceLocation dim = ResourceLocation.parse(dimLoot.dimension);
+         STConfig.Common.dimensionLootTablesMap.put(dim, dimLoot.tables);
+
+         for(TreasureModifierConfig.LootTableEntry table : dimLoot.tables) {
+            STConfig.Common.lootTableEnergyCostMap.put(ResourceLocation.parse(table.id), table.cost);
+         }
+      }
+
+   }
+
+   public static void loadOrCreateTreasureConfig() {
+      Path file = CONFIG_PATH;
+      Gson gson = (new GsonBuilder()).setPrettyPrinting().create();
+
+      try {
+         if (!Files.exists(file, new LinkOption[0])) {
+            label58: {
+               Files.createDirectories(file.getParent());
+               InputStream in = SakuraTinker.class.getResourceAsStream("/data/sakuratinker/config/treasure_modifier.json");
+
+               label49: {
+                  try {
+                     if (in == null) {
+                        System.err.println("[SakuraTinker] 未找到默认的 treasure_modifier.json");
+                        break label49;
+                     }
+
+                     Files.copy(in, file, new CopyOption[0]);
+                     System.out.println("[SakuraTinker] 已生成默认的 treasure_modifier.json");
+                  } catch (Throwable var6) {
+                     if (in != null) {
+                        try {
+                           in.close();
+                        } catch (Throwable var5) {
+                           var6.addSuppressed(var5);
+                        }
+                     }
+
+                     throw var6;
+                  }
+
+                  if (in != null) {
+                     in.close();
+                  }
+                  break label58;
+               }
+
+               if (in != null) {
+                  in.close();
+               }
+
+               return;
+            }
+         }
+
+         String json = Files.readString(file);
+         STConfig.Common.TREASURE_CONFIG = (TreasureModifierConfig)gson.fromJson(json, TreasureModifierConfig.class);
+         rebuildTreasureConfigCache(STConfig.Common.TREASURE_CONFIG);
+         System.out.println("[SakuraTinker] 成功加载 treasure_modifier.json");
+      } catch (IOException e) {
+         System.err.println("[SakuraTinker] 加载 treasure_modifier.json 时出错");
+         e.printStackTrace();
+      }
+
+   }
+
+//   public static void loadOrCreateSchoolAttrConfig() {
+//      Path file = SCHOOL_ATTR_PATH;
+//      Gson gson = (new GsonBuilder()).setPrettyPrinting().create();
+//
+//      try {
+//         InputStream in;
+//         label74: {
+//            if (!Files.exists(file, new LinkOption[0])) {
+//               Files.createDirectories(file.getParent());
+//               in = SakuraTinker.class.getResourceAsStream("/data/sakuratinker/config/school_attributes.json");
+//
+//               try {
+//                  if (in == null) {
+//                     System.err.println("[SakuraTinker] 未找到默认 school_attributes.json");
+//                     break label74;
+//                  }
+//
+//                  Files.copy(in, file, new CopyOption[0]);
+//                  System.out.println("[SakuraTinker] 已生成 school_attributes.json");
+//               } catch (Throwable var6) {
+//                  if (in != null) {
+//                     try {
+//                        in.close();
+//                     } catch (Throwable var5) {
+//                        var6.addSuppressed(var5);
+//                     }
+//                  }
+//
+//                  throw var6;
+//               }
+//
+//               if (in != null) {
+//                  in.close();
+//               }
+//            }
+//
+//            String json = Files.readString(file);
+//            SchoolAttributeConfig config = (SchoolAttributeConfig)gson.fromJson(json, SchoolAttributeConfig.class);
+//            STConfig.SchoolAttributeManager.clear();
+//            if (config != null && config.power_map != null) {
+//               config.power_map.forEach((k, v) -> {
+//                  try {
+//                     ResourceLocation schoolId = ResourceLocation.parse(k);
+//                     ResourceLocation attrId = ResourceLocation.parse(v);
+//                     STConfig.SchoolAttributeManager.put(schoolId, attrId);
+//                  } catch (Exception var4) {
+//                     System.err.println("[SakuraTinker] 无效配置: " + k + " -> " + v);
+//                  }
+//
+//               });
+//            }
+//
+//            System.out.println("[SakuraTinker] 成功加载 school_attributes.json");
+//            return;
+//         }
+//
+//         if (in != null) {
+//            in.close();
+//         }
+//
+//      } catch (IOException e) {
+//         System.err.println("[SakuraTinker] 加载 school_attributes.json 出错");
+//         e.printStackTrace();
+//      }
+//   }
+//
+   static {
+      CONFIG_PATH = FMLPaths.CONFIGDIR.get().resolve("sakuratinker/treasure_modifier.json");
+      //SCHOOL_ATTR_PATH = FMLPaths.CONFIGDIR.get().resolve("sakuratinker/school_attributes.json");
+   }
+
+   @EventBusSubscriber(
+      modid = "sakuratinker",
+      bus = Bus.MOD
+   )
+   public static class Client {
+      public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+      public static final ForgeConfigSpec.ConfigValue<Boolean> NO_MOD_RENDER;
+      public static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_COSMIC_RENDERER;
+      public static final ForgeConfigSpec.ConfigValue<Double> COSMIC_SCALE;
+      public static final ForgeConfigSpec.ConfigValue<Double> COSMIC_SPEED_MULTIPLIER;
+      public static final ForgeConfigSpec.ConfigValue<String> WRAPPED_COSMIC_LOCATION;
+      private static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_TIME_STOP_BALL_RENDERER;
+      public static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_ZENITH_ALL_RANDOM_MATERIALS;
+      public static boolean no_mod_render;
+      public static boolean enable_cosmic_renderer;
+      public static double cosmic_scale;
+      public static double cosmic_speed_multiplier;
+      public static String wrapped_texture_location;
+      public static boolean enable_time_stop_ball_renderer;
+      public static final ForgeConfigSpec SPEC;
+
+      @SubscribeEvent
+      public static void onLoad(ModConfigEvent event) {
+         update();
+      }
+
+      public static void update() {
+         no_mod_render = (Boolean)NO_MOD_RENDER.get();
+         enable_cosmic_renderer = (Boolean)ENABLE_COSMIC_RENDERER.get();
+         cosmic_scale = (Double)COSMIC_SCALE.get();
+         cosmic_speed_multiplier = (Double)COSMIC_SPEED_MULTIPLIER.get();
+         wrapped_texture_location = (String)WRAPPED_COSMIC_LOCATION.get();
+         enable_time_stop_ball_renderer = (Boolean)ENABLE_TIME_STOP_BALL_RENDERER.get();
+      }
+
+      static {
+         BUILDER.push("Render");
+         NO_MOD_RENDER = BUILDER.comment("Disable CIL(CustomInLevel) render.").define("noModRender", false);
+         ENABLE_TIME_STOP_BALL_RENDERER = BUILDER.comment("Render TimeStop shock wave effect.").define("timestopBall", true);
+         BUILDER.push("CosmicShader");
+         ENABLE_COSMIC_RENDERER = BUILDER.comment("Enable cosmic renderer").define("cosmicRenderer", true);
+         COSMIC_SCALE = BUILDER.comment("cosmic shader scale").define("cosmicScale", (double)1.0F);
+         WRAPPED_COSMIC_LOCATION = BUILDER.comment("cosmic texture covering the item").define("wrappedTextureLocation", "sakuratinker:textures/shader/star2.png");
+         COSMIC_SPEED_MULTIPLIER = BUILDER.comment("cosmic render speed multiplier").defineInRange("cosmicSpeedMultiplier", (double)1.0F, (double)0.0F, (double)100.0F);
+         BUILDER.pop();
+         BUILDER.pop();
+         BUILDER.push("Entity Render");
+         BUILDER.push("BladeConvergence Render");
+         ENABLE_ZENITH_ALL_RANDOM_MATERIALS = BUILDER.comment("Enable All Materials Render").comment("允许完全随机的材料渲染").define("enableRandom", true);
+         BUILDER.pop();
+         BUILDER.pop();
+         SPEC = BUILDER.build();
+      }
+   }
+
+   @EventBusSubscriber(
+      modid = "sakuratinker",
+      bus = Bus.MOD
+   )
+   public static class Common {
+      public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+      public static final ForgeConfigSpec.ConfigValue<String> SLIME_CRYSTAL_EARTH;
+      public static final ForgeConfigSpec.ConfigValue<String> SLIME_CRYSTAL_SKY;
+      public static final ForgeConfigSpec.ConfigValue<String> SLIME_CRYSTAL_NETHER;
+      public static final ForgeConfigSpec.ConfigValue<String> GOLD_BLOCK_ITEM;
+      public static final ForgeConfigSpec.BooleanValue CHARMS_ALLOW_MULTIPLE;
+      public static final ForgeConfigSpec.DoubleValue RUINATION_DAMAGE_FACTOR;
+      public static final ForgeConfigSpec.DoubleValue LIFE_RATIO_PERCENT;
+      public static final ForgeConfigSpec.IntValue TICK_INTERVAL;
+      public static final ForgeConfigSpec.DoubleValue ABSORPTION_PER_TICK;
+      public static final ForgeConfigSpec.DoubleValue SHITAKUSO_BONUS;
+      public static final ForgeConfigSpec.DoubleValue SHITAKUSO_MAX_BONUS;
+      public static final ForgeConfigSpec.DoubleValue VOID_PEARL_DROP_CHANCE;
+      public static final ForgeConfigSpec.ConfigValue<String> VOID_PEARL_DROP_MOBS;
+      public static final ForgeConfigSpec.DoubleValue TORTURE_BASE_DAMAGE_THRESHOLD;
+      public static final ForgeConfigSpec.DoubleValue TORTURE_DAMAGE_MULTIPLIER;
+      public static final ForgeConfigSpec.DoubleValue REAPERS_BLESSING_MAX_BONUS;
+      public static final ForgeConfigSpec.DoubleValue REAPERS_BLESSING_BONUS_PER_HEALTH;
+      public static final ForgeConfigSpec.DoubleValue REDUCTION_PER_HIT;
+      public static final ForgeConfigSpec.DoubleValue MAX_REDUCTION;
+      public static final ForgeConfigSpec.IntValue RESET_TICK;
+      public static final ForgeConfigSpec.DoubleValue WITHER_HEART_DROP_CHANCE;
+      public static final ForgeConfigSpec.ConfigValue<String> WITHER_HEART_DROP_MOBS;
+      public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DEBUFF_BLACKLIST;
+      public static final ForgeConfigSpec.BooleanValue ENABLE_TINKER_SPELL_BOOK_ATK_BONUS;
+      public static final ForgeConfigSpec.DoubleValue LIFE_STEAL_CHANCE;
+      public static final ForgeConfigSpec.DoubleValue LIFE_STEAL_PERCENT;
+      public static final ForgeConfigSpec.BooleanValue ENABLE_MAX_HEALTH_HEAL;
+      public static final ForgeConfigSpec.DoubleValue MAX_HEALTH_HEAL_AMOUNT;
+      public static final ForgeConfigSpec.DoubleValue TINKER_ARROW_FIXES;
+      public static TreasureModifierConfig TREASURE_CONFIG = new TreasureModifierConfig();
+      public static final ForgeConfigSpec.DoubleValue TREASURE_MODIFIER_ENERGY_COST;
+      public static double treasureEnergyCost;
+      public static final Map<Pair<ResourceLocation, ResourceLocation>, Integer> energyValueCache = new HashMap();
+      public static final Map<ResourceLocation, Integer> capacityCache = new HashMap();
+      public static final Map<ResourceLocation, List<TreasureModifierConfig.LootTableEntry>> dimensionLootTablesMap = new HashMap();
+      public static final Map<ResourceLocation, Integer> lootTableEnergyCostMap = new HashMap();
+      public static final ForgeConfigSpec.IntValue LASER_GUN_BASE_ENERGY;
+      public static final ForgeConfigSpec.IntValue LASER_GUN_ENERGY_PER_TICK;
+      public static final ForgeConfigSpec.DoubleValue LASER_GUN_DAMAGE_PER_TICK;
+      public static final ForgeConfigSpec.IntValue LASER_GUN_C_MOD_NORMAL_DAMAGE_BONUS;
+      public static final ForgeConfigSpec.BooleanValue LASER_GUN_MODIFIER_EFFECT;
+      public static final ForgeConfigSpec.DoubleValue ALCHEMIACAL_FLUID_CONSUME;
+      public static final ForgeConfigSpec.BooleanValue TINKER_DARK_WAND_ATTACK_BONUS;
+      public static final ForgeConfigSpec.BooleanValue TinkerDarkWandTriggerModifier;
+      public static final ForgeConfigSpec.DoubleValue ESSENCE_EARTH_MODIFIER_BONUS;
+
+      public static final ForgeConfigSpec.ConfigValue<Boolean> INFINITY_DAMAGE;
+      public static final ForgeConfigSpec.ConfigValue<Boolean> BLADE_CONVERGENCE_CAN_TRIGGER_MODIFIER;
+      public static final ForgeConfigSpec.EnumValue<GrowthMode> growthMode;
+      public static final ForgeConfigSpec.DoubleValue linearPerKill;
+      public static final ForgeConfigSpec.DoubleValue logFactor;
+      public static final ForgeConfigSpec.DoubleValue capMax;
+      public static final ForgeConfigSpec.DoubleValue capScale;
+      public static String slimeCrystalEarth;
+      public static String slimeCrystalSky;
+      public static String slimeCrystalNether;
+      public static String goldBlockItem;
+      public static boolean charmsAllowMultiple;
+      public static double ruinationDamageFactor;
+      public static double lifeRatioPercent;
+      public static int tickInterval;
+      public static double absorptionPerTick;
+      public static double shitakusoBonus;
+      public static double bladeConvergenceDropChance;
+      public static String bladeConvergenceDropMobs;
+      public static double voidPearlDropChance;
+      public static String voidPearlDropMobs;
+      public static double tortureBaseDamageThreshold;
+      public static double tortureDamageMultiplier;
+      public static double reapersBlessingMaxBonus;
+      public static double reapersBlessingBonusPerHealth;
+      public static double reductionPerHit;
+      public static double maxReduction;
+      public static int resetTick;
+      public static double witherHeartDropChance;
+      public static String witherHeartDropMobs;
+      public static List<? extends String> jinxDollBlackList;
+      public static boolean enableTinkerBookATKBonus;
+      public static double lifeStealChance;
+      public static double lifeStealPercent;
+      public static boolean enableMaxHealthHeal;
+      public static double maxHealthHealAmount;
+      public static double tinkerArrowDamageFixes;
+      public static final ForgeConfigSpec SPEC;
+
+      @SubscribeEvent
+      public static void onLoad(ModConfigEvent event) {
+         if (event.getConfig().getSpec() == SPEC) {
+            if (!FMLEnvironment.production) {
+               init();
+               STConfig.loadOrCreateTreasureConfig();
+            }
+         }
+      }
+
+      public static void init() {
+         treasureEnergyCost = (Double)TREASURE_MODIFIER_ENERGY_COST.get();
+         slimeCrystalEarth = (String)SLIME_CRYSTAL_EARTH.get();
+         slimeCrystalSky = (String)SLIME_CRYSTAL_SKY.get();
+         slimeCrystalNether = (String)SLIME_CRYSTAL_NETHER.get();
+         goldBlockItem = (String)GOLD_BLOCK_ITEM.get();
+         charmsAllowMultiple = (Boolean)CHARMS_ALLOW_MULTIPLE.get();
+         ruinationDamageFactor = (Double)RUINATION_DAMAGE_FACTOR.get();
+         lifeRatioPercent = (Double)LIFE_RATIO_PERCENT.get();
+         tickInterval = (Integer)TICK_INTERVAL.get();
+         absorptionPerTick = (Double)ABSORPTION_PER_TICK.get();
+         shitakusoBonus = (Double)SHITAKUSO_BONUS.get();
+         voidPearlDropChance = (Double)VOID_PEARL_DROP_CHANCE.get();
+         voidPearlDropMobs = (String)VOID_PEARL_DROP_MOBS.get();
+         tortureBaseDamageThreshold = (Double)TORTURE_BASE_DAMAGE_THRESHOLD.get();
+         tortureDamageMultiplier = (Double)TORTURE_DAMAGE_MULTIPLIER.get();
+         reapersBlessingMaxBonus = (Double)REAPERS_BLESSING_MAX_BONUS.get();
+         reapersBlessingBonusPerHealth = (Double)REAPERS_BLESSING_BONUS_PER_HEALTH.get();
+         reductionPerHit = (Double)REDUCTION_PER_HIT.get();
+         maxReduction = (Double)MAX_REDUCTION.get();
+         resetTick = (Integer)RESET_TICK.get();
+         witherHeartDropChance = (Double)WITHER_HEART_DROP_CHANCE.get();
+         witherHeartDropMobs = (String)WITHER_HEART_DROP_MOBS.get();
+         jinxDollBlackList = (List)DEBUFF_BLACKLIST.get();
+         enableTinkerBookATKBonus = (Boolean)ENABLE_TINKER_SPELL_BOOK_ATK_BONUS.get();
+         lifeStealChance = (Double)LIFE_STEAL_CHANCE.get();
+         lifeStealPercent = (Double)LIFE_STEAL_PERCENT.get();
+         enableMaxHealthHeal = (Boolean)ENABLE_MAX_HEALTH_HEAL.get();
+         maxHealthHealAmount = (Double)MAX_HEALTH_HEAL_AMOUNT.get();
+         tinkerArrowDamageFixes = (Double)TINKER_ARROW_FIXES.get();
+      }
+
+      static {
+         BUILDER.push("兼容配置");
+         BUILDER.push("modifier");
+         BUILDER.pop();
+         BUILDER.pop();
+         BUILDER.push("recipe");
+         BUILDER.comment("魂樱刻印配方配置").push("sakura_core");
+         SLIME_CRYSTAL_EARTH = BUILDER.comment("大地史莱姆水晶 (default: sakuratinker:slime_crystal_earth)").define("slimeCrystalEarth", "sakuratinker:slime_crystal_earth");
+         SLIME_CRYSTAL_SKY = BUILDER.comment("天空史莱姆水晶 (default: sakuratinker:slime_crystal_sky)").define("slimeCrystalSky", "sakuratinker:slime_crystal_sky");
+         SLIME_CRYSTAL_NETHER = BUILDER.comment("下界史莱姆水晶 (default: sakuratinker:slime_crystal_nether)").define("slimeCrystalNether", "sakuratinker:slime_crystal_nether");
+         GOLD_BLOCK_ITEM = BUILDER.comment("金块 (default: minecraft:gold_block)").define("goldBlock", "minecraft:gold_block");
+         BUILDER.pop();
+         BUILDER.pop();
+         BUILDER.push("工具配置");
+         BUILDER.comment("护符设置").push("charms");
+         CHARMS_ALLOW_MULTIPLE = BUILDER.comment("设为true允许装备多件护符").define("allowMultipleCharms", false);
+         BUILDER.pop();
+         BUILDER.comment("工匠秘典").push("Tinker spell book");
+         ENABLE_TINKER_SPELL_BOOK_ATK_BONUS = BUILDER.comment("设为true允许秘典攻击力计算进法术伤害").define("enableTinkerBookATKBonus", true);
+         BUILDER.pop();
+         BUILDER.comment("吸血鬼刀").push("Vampire knives");
+         LIFE_STEAL_CHANCE = BUILDER.comment("吸血概率").defineInRange("lifeStealChance", (double)0.5F, (double)0.0F, (double)1.0F);
+         LIFE_STEAL_PERCENT = BUILDER.comment("一次攻击伤害中的吸取量").defineInRange("lifeStealPercent", 0.1, (double)0.0F, (double)10.0F);
+         ENABLE_MAX_HEALTH_HEAL = BUILDER.comment("是否开启最大生命值恢复").define("enableMaxHealthHeal", true);
+         MAX_HEALTH_HEAL_AMOUNT = BUILDER.comment("最大生命值恢复系数").defineInRange("maxHealthHealAmount", 0.05, (double)0.0F, (double)10.0F);
+         BUILDER.pop();
+         BUILDER.comment("工匠箭矢").push("Tinker Arrow");
+         TINKER_ARROW_FIXES = BUILDER.comment("箭矢伤害修正系数，最小为1.0").defineInRange("enableTinkerBookATKBonus", 1.2, (double)1.0F, (double)Integer.MAX_VALUE);
+         BUILDER.pop();
+         BUILDER.comment("战术刺刀激光步枪").push("Laser Gun");
+         LASER_GUN_BASE_ENERGY = BUILDER.comment("激光普通模式能量消耗").defineInRange("laserBaseEnergy", 500, 0, Integer.MAX_VALUE);
+         LASER_GUN_ENERGY_PER_TICK = BUILDER.comment("激光连发模式每tick增加的能量消耗").defineInRange("continuousModePerTickEnergyCost", 50, 0, Integer.MAX_VALUE);
+         LASER_GUN_DAMAGE_PER_TICK = BUILDER.comment("激光连发模式每tick伤害增幅").defineInRange("continuousModePerTickDamageIncrease", 0.05, (double)0.0F, Double.MAX_VALUE);
+         LASER_GUN_C_MOD_NORMAL_DAMAGE_BONUS = BUILDER.comment("激光连发模式伤害增幅持平普通模式所需要的tick大小").defineInRange("continuousModeDamageToBaseBonus", 40, 1, Integer.MAX_VALUE);
+         LASER_GUN_MODIFIER_EFFECT = BUILDER.comment("激光枪是否会受到Modifier的影响，默认为true").define("laserGunModifierEffect", true);
+         BUILDER.pop();
+         BUILDER.comment("炼金手套").push("Alchemical Gloves");
+         ALCHEMIACAL_FLUID_CONSUME = BUILDER.comment("每次投掷消耗的流体数量，默认250").comment("The amount of fluid consumed per throw is 250 by default.").defineInRange("fluidConsume", (double)50.0F, (double)0.0F, Double.MAX_VALUE);
+         BUILDER.pop();
+         BUILDER.comment("工匠黑暗法杖").push("Tinker Dark Wand");
+         TINKER_DARK_WAND_ATTACK_BONUS = BUILDER.comment("聚晶伤害是否会受到工具攻击力影响。默认为false").comment("Does polycrystalline damage get affected by the tool's attack power? The default is false.").define("attackBonus", false);
+         TinkerDarkWandTriggerModifier = BUILDER.define("disabled trigger modifier", true);
+         BUILDER.pop();
+         BUILDER.comment("万剑归一").push("Blade Convergence Config");
+         BLADE_CONVERGENCE_CAN_TRIGGER_MODIFIER = BUILDER.define("can trigger modifier,default false", false);
+         BUILDER.pop();
+         BUILDER.pop();
+         BUILDER.push("drop");
+         BUILDER.comment("虚空珍珠掉落配置").push("void_pearl");
+         VOID_PEARL_DROP_CHANCE = BUILDER.comment("掉落概率 (0.0 - 1.0)").defineInRange("dropChance", 0.01, (double)0.0F, (double)1.0F);
+         VOID_PEARL_DROP_MOBS = BUILDER.comment("可以掉落虚空珍珠的生物 (用逗号分隔)").define("dropMobs", "minecraft:ender_dragon");
+         BUILDER.pop();
+         BUILDER.comment("凋零之心掉落配置").push("wither_heart");
+         WITHER_HEART_DROP_CHANCE = BUILDER.comment("掉落概率 (0.0 - 1.0)").defineInRange("dropChance", (double)1.0F, (double)0.0F, (double)1.0F);
+         WITHER_HEART_DROP_MOBS = BUILDER.comment("可以掉落凋零之心的生物 (用逗号分隔)").define("dropMobs", "minecraft:wither");
+         BUILDER.pop();
+         BUILDER.pop();
+         BUILDER.push("modifiers");
+         BUILDER.comment("罪孽根源配置").push("ruination");
+         RUINATION_DAMAGE_FACTOR = BUILDER.comment("罪孽根源的伤害系数").defineInRange("damageFactor", 0.08, (double)0.0F, (double)1.0F);
+         BUILDER.pop();
+         BUILDER.comment("生命之尺配置").push("life_ratio");
+         LIFE_RATIO_PERCENT = BUILDER.comment("生命之尺的增幅系数").defineInRange("bonusPercent", 0.1, (double)0.0F, (double)1.0F);
+         BUILDER.pop();
+         BUILDER.comment("伤害吸收配置").push("absorption");
+         TICK_INTERVAL = BUILDER.comment("每tick恢复的间隔 (default: 5)").defineInRange("tickInterval", 5, 1, 1000);
+         ABSORPTION_PER_TICK = BUILDER.comment("每tick恢复的生命值 (default: 0.2)").defineInRange("absorptionPerTick", 0.2, (double)0.0F, (double)100.0F);
+         BUILDER.pop();
+         BUILDER.comment("下克上配置").push("shitakuso");
+         SHITAKUSO_BONUS = BUILDER.comment("根据生命比例缩放伤害的系数 (default: 0.1)").defineInRange("bonusMultiplier", 0.1, (double)0.0F, (double)10.0F);
+         SHITAKUSO_MAX_BONUS = BUILDER.comment("下克上最大增幅 (default: 10)").defineInRange("bonusMultiplier", (double)10.0F, (double)0.0F, Double.MAX_VALUE);
+         BUILDER.pop();
+         BUILDER.comment("折磨效果配置").push("torture");
+         TORTURE_BASE_DAMAGE_THRESHOLD = BUILDER.comment("基础移动多少米触发伤害(1.0 = 1格)").defineInRange("baseDamageThreshold", (double)1.0F, 0.1, (double)Integer.MAX_VALUE);
+         TORTURE_DAMAGE_MULTIPLIER = BUILDER.comment("每等级对阈值的影响系数(0.2 = 每等级减少20%阈值)").defineInRange("damageMultiplier", 0.2, (double)0.0F, (double)1.0F);
+         BUILDER.pop();
+         BUILDER.comment("死神祝福配置").push("reapers_blessing");
+         REAPERS_BLESSING_MAX_BONUS = BUILDER.comment("最大加成 (百分比, 例如 0.4 是 40%)").defineInRange("maxBonus", 0.4, (double)0.0F, (double)1.0F);
+         REAPERS_BLESSING_BONUS_PER_HEALTH = BUILDER.comment("每百分比的生命加成").defineInRange("bonusPerHealth", 0.01, (double)0.0F, 0.1);
+         BUILDER.pop();
+         BUILDER.comment("高频结界配置").push("high_frequency_barrier");
+         REDUCTION_PER_HIT = BUILDER.comment("每次受到伤害时增加的伤害减免比例 (0.0 - 1.0)").defineInRange("reductionPerHit", 0.05, (double)0.0F, (double)1.0F);
+         MAX_REDUCTION = BUILDER.comment("最大伤害减免比例 (0.0 - 1.0)").defineInRange("maxReduction", (double)0.5F, (double)0.0F, (double)1.0F);
+         RESET_TICK = BUILDER.comment("多少tick未受攻击后重置层数 (0表示不重置)").defineInRange("resetTicks", 100, 0, Integer.MAX_VALUE);
+         BUILDER.pop();
+         BUILDER.comment("厄运人偶配置").push("jinx_doll");
+         DEBUFF_BLACKLIST = BUILDER.comment("厄运人偶消除buff黑名单").defineListAllowEmpty("debuffBlacklist", List.of("youkaishomecoming:youkaified"), (o) -> o instanceof String);
+         BUILDER.pop();
+         BUILDER.comment("聚宝特性配置").push("treasure_modifier");
+         TREASURE_MODIFIER_ENERGY_COST = BUILDER.comment("每次生成战利品消耗的能量").defineInRange("energy_cost", (double)50.0F, 0.01, (double)Integer.MAX_VALUE);
+         BUILDER.pop();
+         BUILDER.comment("地之精华配置").push("essence_earth_modifier");
+         ESSENCE_EARTH_MODIFIER_BONUS = BUILDER.comment("最大加成，默认2.0").defineInRange("bonus", (double)2.0F, (double)0.0F, (double)Integer.MAX_VALUE);
+         BUILDER.pop();
+         BUILDER.comment("噬魂者配置").push("soul_devourer");
+         growthMode = BUILDER.comment("计算模式: LINEAR / LOG / SOFTCAP （线性，对数，指数趋近）").comment("Damage growth mode: LINEAR / LOG / SOFTCAP").defineEnum("growth_mode", STConfig.Common.GrowthMode.LOG);
+         linearPerKill = BUILDER.comment("线性增长").comment("Linear bonus per kill").defineInRange("linear_per_kill", 1.0E-4, (double)0.0F, (double)1.0F);
+         logFactor = BUILDER.comment("对数增长").comment("Logarithmic growth factor").defineInRange("log_factor", 0.1, (double)0.0F, (double)10.0F);
+         capMax = BUILDER.comment("指数趋近最大值").comment("Softcap max bonus").defineInRange("softcap_max", (double)1.5F, (double)0.0F, (double)100.0F);
+         capScale = BUILDER.comment("指数趋近速率（越大越慢）").comment("Softcap scale (bigger = slower)").defineInRange("softcap_scale", (double)5000.0F, (double)1.0F, (double)1000000.0F);
+         BUILDER.comment("全知全能配置").push("Omnipotence Config");
+         INFINITY_DAMAGE = BUILDER.comment("全知全能造成的最大伤害，默认Float.MAX,为false则是以当前武器攻击力为准").define("maxDamage", true);
+         BUILDER.pop();
+         BUILDER.pop();
+         SPEC = BUILDER.build();
+      }
+
+      public static enum GrowthMode {
+         LINEAR,
+         LOG,
+         SOFTCAP;
+
+         // $FF: synthetic method
+         private static GrowthMode[] $values() {
+            return new GrowthMode[]{LINEAR, LOG, SOFTCAP};
+         }
+      }
+   }
+
+   @EventBusSubscriber(
+      modid = "sakuratinker",
+      bus = Bus.MOD
+   )
+   public static class Server {
+      public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+      public static final ForgeConfigSpec SPEC;
+
+      @SubscribeEvent
+      public static void onLoad(ModConfigEvent event) {
+      }
+
+      public static void init() {
+      }
+
+      static {
+         SPEC = BUILDER.build();
+      }
+   }
+
+   @EventBusSubscriber(
+      bus = Bus.FORGE
+   )
+   public static class LoadConfig {
+      @SubscribeEvent
+      public static void onLevelInit(LevelEvent.Load event) {
+         STConfig.Common.init();
+      }
+   }
+
+   public static class TreasureModifierConfig {
+      public List<String> dimensions = List.of();
+      public List<EntityEnergyConfig> entity_energy_values = List.of();
+      public List<DimensionCapacityConfig> dimension_capacities = List.of();
+      public List<DimensionLootTableConfig> dimension_loot_tables = List.of();
+
+      public static class EntityEnergyConfig {
+         public String entity;
+         public String dimension;
+         public int value;
+      }
+
+      public static class DimensionCapacityConfig {
+         public String dimension;
+         public int capacity;
+      }
+
+      public static class DimensionLootTableConfig {
+         public String dimension;
+         public List<LootTableEntry> tables;
+      }
+
+      public static class LootTableEntry {
+         public String id;
+         public int cost;
+      }
+   }
+
+//   public static class SchoolAttributeConfig {
+//      public Map<String, String> power_map = new HashMap();
+//   }
+//
+//   public static class SchoolAttributeManager {
+//      private static final Map<ResourceLocation, ResourceLocation> POWER_MAP = new HashMap();
+//
+//      public static void clear() {
+//         POWER_MAP.clear();
+//      }
+//
+//      public static void put(ResourceLocation schoolId, ResourceLocation attrId) {
+//         POWER_MAP.put(schoolId, attrId);
+//      }
+//
+//      public static Attribute getPowerAttribute(SchoolType school) {
+//         if (school == null) {
+//            return null;
+//         } else {
+//            ResourceLocation schoolId = school.getId();
+//            ResourceLocation attrId = (ResourceLocation)POWER_MAP.get(schoolId);
+//            if (attrId != null) {
+//               Attribute attr = (Attribute)ForgeRegistries.ATTRIBUTES.getValue(attrId);
+//               if (attr != null) {
+//                  return attr;
+//               }
+//            }
+//
+//            ResourceLocation autoId = ResourceLocation.fromNamespaceAndPath(schoolId.m_135827_(), schoolId.m_135815_() + "_spell_power");
+//            Attribute autoAttr = (Attribute)ForgeRegistries.ATTRIBUTES.getValue(autoId);
+//            return autoAttr != null ? autoAttr : (Attribute)AttributeRegistry.SPELL_POWER.get();
+//         }
+//      }
+//   }
+}

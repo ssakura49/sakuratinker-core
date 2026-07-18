@@ -1,0 +1,22 @@
+package com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.combat;
+
+import java.util.Collection;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.event.entity.living.ShieldBlockEvent;
+import slimeknights.tconstruct.library.modifiers.ModifierEntry;
+import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
+
+public interface ShieldBlockingModifierHook {
+   default void onShieldBlocked(IToolStackView shield, ModifierEntry entry, ShieldBlockEvent event, Player player, DamageSource source) {
+   }
+
+   public static record AllMerge(Collection<ShieldBlockingModifierHook> modules) implements ShieldBlockingModifierHook {
+      public void onShieldBlocked(IToolStackView shield, ModifierEntry entry, ShieldBlockEvent event, Player player, DamageSource source) {
+         for(ShieldBlockingModifierHook module : this.modules) {
+            module.onShieldBlocked(shield, entry, event, player, source);
+         }
+
+      }
+   }
+}
