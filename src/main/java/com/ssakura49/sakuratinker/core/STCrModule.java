@@ -2,6 +2,7 @@ package com.ssakura49.sakuratinker.core;
 
 import com.ssakura49.sakura_library.api.client.creativetab.SideBarCategory;
 import com.ssakura49.sakura_library.api.client.creativetab.TabSideBarManager;
+import com.ssakura49.sakuratinker.STCrConfig;
 import com.ssakura49.sakuratinker.SakuraTinker;
 import com.ssakura49.sakuratinker.core.data.condition.CompatConfigCondition;
 import com.ssakura49.sakuratinker.core.data.condition.ConfigCondition;
@@ -59,6 +60,7 @@ public class STCrModule {
       MODIFIERS.register(bus);
       ENTITIES.register(bus);
       STCrRecipe.RECIPE_SERIALIZERS.register(bus);
+      STCrConfig.init();
    }
 
    @SubscribeEvent
