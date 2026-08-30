@@ -1,4 +1,4 @@
-package com.ssakura49.sakuratinker.core.library.data;
+package com.ssakura49.sakuratinker.core.library.registry.record;
 
 import org.jetbrains.annotations.Nullable;
 import slimeknights.tconstruct.library.materials.stats.IMaterialStats;

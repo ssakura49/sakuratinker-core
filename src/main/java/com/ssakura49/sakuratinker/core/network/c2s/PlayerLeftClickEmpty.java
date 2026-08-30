@@ -18,7 +18,7 @@ public class PlayerLeftClickEmpty {
    public void toByte(FriendlyByteBuf buf) {
    }
 
-   public boolean handle(Supplier<NetworkEvent.Context> supplier) {
+   public void handle(Supplier<NetworkEvent.Context> supplier) {
       NetworkEvent.Context context = (NetworkEvent.Context)supplier.get();
       ServerPlayer serverPlayer = context.getSender();
       if (serverPlayer != null) {
@@ -26,7 +26,5 @@ public class PlayerLeftClickEmpty {
          EquipmentSlot slot = stack.getEquipmentSlot();
          context.enqueueWork(() -> LeftClickModifierHook.handleLeftClick(stack, serverPlayer, slot));
       }
-
-      return true;
    }
 }

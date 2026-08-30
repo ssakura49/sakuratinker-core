@@ -1,4 +1,4 @@
-package com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.builder;
+package com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.build;
 
 import com.ssakura49.sakuratinker.core.library.context.ReplaceContext;
 import java.util.Collection;

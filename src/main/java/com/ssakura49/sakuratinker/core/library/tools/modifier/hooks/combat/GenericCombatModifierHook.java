@@ -12,23 +12,13 @@ public interface GenericCombatModifierHook {
    default void onMeleeCriticalHit(IToolStackView tool, ModifierEntry entry, TinkerToolCriticalEvent event, LivingEntity attacker, LivingEntity target) {
    }
 
-   default void onCalculateDamage(IToolStackView tool, ModifierEntry entry, LivingDamageCalculationEvent event, LivingEntity attacker, LivingEntity target) {
-   }
-
    default void onKillLivingTarget(IToolStackView tool, ModifierEntry entry, LivingDeathEvent event, LivingEntity attacker, LivingEntity target) {
    }
 
-   public static record AllMerge(Collection<GenericCombatModifierHook> modules) implements GenericCombatModifierHook {
+   record AllMerger(Collection<GenericCombatModifierHook> modules) implements GenericCombatModifierHook {
       public void onMeleeCriticalHit(IToolStackView tool, ModifierEntry entry, TinkerToolCriticalEvent event, LivingEntity attacker, LivingEntity target) {
          for(GenericCombatModifierHook module : this.modules) {
             module.onMeleeCriticalHit(tool, entry, event, attacker, target);
-         }
-
-      }
-
-      public void onCalculateDamage(IToolStackView tool, ModifierEntry entry, LivingDamageCalculationEvent event, LivingEntity attacker, LivingEntity target) {
-         for(GenericCombatModifierHook module : this.modules) {
-            module.onCalculateDamage(tool, entry, event, attacker, target);
          }
 
       }

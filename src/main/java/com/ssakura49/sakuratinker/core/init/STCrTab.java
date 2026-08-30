@@ -3,16 +3,11 @@ package com.ssakura49.sakuratinker.core.init;
 import com.ssakura49.sakura_library.api.client.creativetab.SideBarCategory;
 import com.ssakura49.sakura_library.api.client.creativetab.TabSideBarManager;
 import java.util.List;
-import java.util.Objects;
-
-import com.ssakura49.sakuratinker.SakuraTinker;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 

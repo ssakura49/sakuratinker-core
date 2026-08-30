@@ -5,6 +5,11 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "sakuratinker.refmap.json",
   "mixins": [
+    "AbstractArrowMixin",
+    "EntityMixin",
+    "ItemStackMixin",
+    "ProjectileMixin",
+    "accessor.ProjectileAccessor"
   ],
   "client": [
   ],

@@ -1,7 +1,5 @@
 package com.ssakura49.sakuratinker.core.tools.modifiers.base;
 
-import com.c2h6s.etstlib.register.EtSTLibHooks;
-import com.c2h6s.etstlib.tool.hooks.ProjectileTickModifierHook;
 import com.ssakura49.sakuratinker.core.library.context.AttackedContent;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.STHooks;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.armor.WearerDamagePreHook;
@@ -10,11 +8,11 @@ import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.armor.Wearer
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.armor.WearerTakeHealHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.click.KeyPressModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.click.LeftClickModifierHook;
-import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.combat.CauseDamageModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.combat.GenericCombatModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.combat.MeleeCooldownModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.combat.ModifyDamageSourceModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.combat.ShieldBlockingModifierHook;
+import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.range.ProjectileTickModifierHook;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -92,10 +90,10 @@ import slimeknights.tconstruct.library.tools.nbt.ToolDataNBT;
 import slimeknights.tconstruct.library.tools.stat.FloatToolStat;
 import slimeknights.tconstruct.library.tools.stat.ModifierStatsBuilder;
 
-public abstract class BaseModifier extends Modifier implements AttributesModifierHook, ProcessLootModifierHook, MeleeDamageModifierHook, MeleeHitModifierHook, DamageDealtModifierHook, ProjectileHitModifierHook, ProjectileLaunchModifierHook, EquipmentChangeModifierHook, InventoryTickModifierHook, OnAttackedModifierHook, ModifyDamageModifierHook, ModifierRemovalHook, BlockBreakModifierHook, EntityInteractionModifierHook, ToolStatsModifierHook, BreakSpeedModifierHook, ToolDamageModifierHook, KeybindInteractModifierHook, TooltipModifierHook, RequirementsModifierHook, ValidateModifierHook, UsingToolModifierHook, BlockHarvestModifierHook, BlockInteractionModifierHook, VolatileDataModifierHook, ConditionalStatModifierHook, LeftClickModifierHook, ModifyDamageSourceModifierHook, WearerDamagePreHook, WearerDamageTakeHook, WearerKnockBackHook, WearerTakeHealHook, GenericCombatModifierHook, MeleeCooldownModifierHook, ShieldBlockingModifierHook, KeyPressModifierHook, CauseDamageModifierHook, ProjectileTickModifierHook {
+public abstract class BaseModifier extends Modifier implements AttributesModifierHook, ProcessLootModifierHook, MeleeDamageModifierHook, MeleeHitModifierHook, DamageDealtModifierHook, ProjectileHitModifierHook, ProjectileLaunchModifierHook, EquipmentChangeModifierHook, InventoryTickModifierHook, OnAttackedModifierHook, ModifyDamageModifierHook, ModifierRemovalHook, BlockBreakModifierHook, EntityInteractionModifierHook, ToolStatsModifierHook, BreakSpeedModifierHook, ToolDamageModifierHook, KeybindInteractModifierHook, TooltipModifierHook, RequirementsModifierHook, ValidateModifierHook, UsingToolModifierHook, BlockHarvestModifierHook, BlockInteractionModifierHook, VolatileDataModifierHook, ConditionalStatModifierHook, LeftClickModifierHook, ModifyDamageSourceModifierHook, WearerDamagePreHook, WearerDamageTakeHook, WearerKnockBackHook, WearerTakeHealHook, GenericCombatModifierHook, MeleeCooldownModifierHook, ShieldBlockingModifierHook, KeyPressModifierHook, ProjectileTickModifierHook {
    protected void registerHooks(ModuleHookMap.@NotNull Builder builder) {
       super.registerHooks(builder);
-      builder.addHook(this, new ModuleHook[]{ModifierHooks.ATTRIBUTES, ModifierHooks.PROCESS_LOOT, ModifierHooks.MELEE_DAMAGE, ModifierHooks.MELEE_HIT, ModifierHooks.DAMAGE_DEALT, ModifierHooks.PROJECTILE_HIT, ModifierHooks.PROJECTILE_LAUNCH, ModifierHooks.EQUIPMENT_CHANGE, ModifierHooks.INVENTORY_TICK, ModifierHooks.ON_ATTACKED, ModifierHooks.MODIFY_DAMAGE, ModifierHooks.TOOLTIP, ModifierHooks.REMOVE, ModifierHooks.BLOCK_BREAK, ModifierHooks.ENTITY_INTERACT, ModifierHooks.TOOL_STATS, ModifierHooks.ARMOR_INTERACT, ModifierHooks.TOOL_DAMAGE, ModifierHooks.REQUIREMENTS, ModifierHooks.TOOL_USING, ModifierHooks.BLOCK_HARVEST, ModifierHooks.BLOCK_INTERACT, ModifierHooks.VOLATILE_DATA, ModifierHooks.CONDITIONAL_STAT, STHooks.LEFT_CLICK, STHooks.MODIFY_DAMAGE_SOURCE, STHooks.WEARER_DAMAGE_PRE, STHooks.WEARER_DAMAGE_TAKE, STHooks.WEARER_KNOCK_BACK, STHooks.WEARER_TAKE_HEAL, STHooks.GENERIC_COMBAT, STHooks.MELEE_COOLDOWN, STHooks.SHIELD_BLOCKING, STHooks.KEY_PRESS, STHooks.CAUSE_DAMAGE, EtSTLibHooks.PROJECTILE_TICK});
+      builder.addHook(this, ModifierHooks.ATTRIBUTES, ModifierHooks.PROCESS_LOOT, ModifierHooks.MELEE_DAMAGE, ModifierHooks.MELEE_HIT, ModifierHooks.DAMAGE_DEALT, ModifierHooks.PROJECTILE_HIT, ModifierHooks.PROJECTILE_LAUNCH, ModifierHooks.EQUIPMENT_CHANGE, ModifierHooks.INVENTORY_TICK, ModifierHooks.ON_ATTACKED, ModifierHooks.MODIFY_DAMAGE, ModifierHooks.TOOLTIP, ModifierHooks.REMOVE, ModifierHooks.BLOCK_BREAK, ModifierHooks.ENTITY_INTERACT, ModifierHooks.TOOL_STATS, ModifierHooks.ARMOR_INTERACT, ModifierHooks.TOOL_DAMAGE, ModifierHooks.REQUIREMENTS, ModifierHooks.TOOL_USING, ModifierHooks.BLOCK_HARVEST, ModifierHooks.BLOCK_INTERACT, ModifierHooks.VOLATILE_DATA, ModifierHooks.CONDITIONAL_STAT, STHooks.LEFT_CLICK, STHooks.MODIFY_DAMAGE_SOURCE, STHooks.WEARER_DAMAGE_PRE, STHooks.WEARER_DAMAGE_TAKE, STHooks.WEARER_KNOCK_BACK, STHooks.WEARER_TAKE_HEAL, STHooks.GENERIC_COMBAT, STHooks.MELEE_COOLDOWN, STHooks.SHIELD_BLOCKING, STHooks.KEY_PRESS, STHooks.PROJECTILE_TICK);
    }
 
    public BaseModifier() {

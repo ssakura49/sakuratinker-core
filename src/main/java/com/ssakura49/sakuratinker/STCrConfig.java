@@ -26,8 +26,8 @@ public class STCrConfig {
 
    @SuppressWarnings("removal")
    public static void init() {
-      String common_path = "ssakura49/st-core-common.toml";
-      String client_path = "ssakura49/st-core-client.toml";
+      String common_path = "ssakura49/sakuratinker-core-common.toml";
+      String client_path = "ssakura49/sakuratinker-core-client.toml";
       ModLoadingContext.get().registerConfig(Type.COMMON, commonSpec, common_path);
       ModLoadingContext.get().registerConfig(Type.CLIENT, clientSpec, client_path);
    }
@@ -60,6 +60,8 @@ public class STCrConfig {
 
       //通用词条黑名单
       public final ForgeConfigSpec.ConfigValue<List<? extends String>> MODIFIER_BLACKLIST;
+
+      public final ForgeConfigSpec.BooleanValue ALLOW_PROJECTILE_TICK_INGROUND;
 
       public Common(ForgeConfigSpec.Builder builder) {
          builder.comment("***注意！", "***Notice",
@@ -136,6 +138,11 @@ public class STCrConfig {
                  .comment("Blacklist of modifiers (by ID) to skip in damage calculation")
                  .comment("Modifier黑名单")
                  .defineList("blacklist", List.of("cloudertinker:steelbone"), (obj) -> obj instanceof String);
+
+         this.ALLOW_PROJECTILE_TICK_INGROUND = builder
+                 .comment("是否允许弹射物在命中方块后依然通过ProjectileTickModifierHook遍历全词条，默认false",
+                         "Whether to allow projectiles to still go through all entries via ProjectileTickModifierHook after hitting a block, false by default.")
+                 .define("allowProjectileTickInground",false);
 
 
          builder.pop();

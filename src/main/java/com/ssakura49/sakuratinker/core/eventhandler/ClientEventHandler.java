@@ -1,6 +1,7 @@
 package com.ssakura49.sakuratinker.core.eventhandler;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ssakura49.sakuratinker.core.client.gui.item.ToolCustomBarDecorator;
 import com.ssakura49.sakuratinker.core.client.model.FoxCurioModel;
 import com.ssakura49.sakuratinker.core.client.renderer.entity.FoxCurioModelRenderer;
 import com.ssakura49.sakuratinker.core.init.STCrItem;
@@ -21,15 +22,14 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.client.event.ModelEvent;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.minecraftforge.client.event.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import slimeknights.tconstruct.gadgets.client.FancyItemFrameRenderer;
+import slimeknights.tconstruct.library.tools.item.IModifiable;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
 import top.theillusivec4.curios.api.client.ICurioRenderer;
@@ -74,7 +74,7 @@ public class ClientEventHandler {
 
    @SubscribeEvent
    public static void clientSetup(FMLClientSetupEvent event) {
-      CuriosRendererRegistry.register((Item)STCrItem.FOX_MASK.get(), () -> new ICurioRenderer() {
+      CuriosRendererRegistry.register(STCrItem.FOX_MASK.get(), () -> new ICurioRenderer() {
             public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext, PoseStack poseStack, RenderLayerParent<T, M> renderLayerParent, MultiBufferSource buffer, int light, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
                LivingEntity entity = slotContext.entity();
                if (!entity.isInvisible()) {
@@ -82,5 +82,12 @@ public class ClientEventHandler {
                }
             }
          });
+   }
+
+   @SubscribeEvent
+   public static void registerItemDecoration(RegisterItemDecorationsEvent event){
+      ForgeRegistries.ITEMS.getValues().stream().filter(item -> item instanceof IModifiable).forEach(item -> {
+         event.register(item, ToolCustomBarDecorator.INSTANCE);
+      });
    }
 }

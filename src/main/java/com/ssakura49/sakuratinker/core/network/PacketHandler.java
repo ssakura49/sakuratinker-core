@@ -1,27 +1,34 @@
 package com.ssakura49.sakuratinker.core.network;
 
+import com.ssakura49.sakuratinker.SakuraTinker;
 import com.ssakura49.sakuratinker.core.network.c2s.ModifierKeyPressPacket;
 import com.ssakura49.sakuratinker.core.network.c2s.PlayerLeftClickEmpty;
 import com.ssakura49.sakuratinker.core.network.s2c.RefreshAllModifierConfigSpecs;
-import com.ssakura49.sakuratinker.core.network.s2c.SLightningPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.NetworkRegistry.ChannelBuilder;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public class PacketHandler {
    private static final String PROTOCOL_VERSION = "1";
-   public static final SimpleChannel INSTANCE = ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath("sakuratinker", "main")).networkProtocolVersion(() -> "1").clientAcceptedVersions("1"::equals).serverAcceptedVersions("1"::equals).simpleChannel();
+   public static SimpleChannel INSTANCE;
    private static int id = 0;
 
    public static void init() {
-      INSTANCE.messageBuilder(PlayerLeftClickEmpty.class, id++, NetworkDirection.PLAY_TO_SERVER).decoder(PlayerLeftClickEmpty::new).encoder(PlayerLeftClickEmpty::toByte).consumerMainThread(PlayerLeftClickEmpty::handle).add();
+      INSTANCE = NetworkRegistry.ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(SakuraTinker.MODID, "sakuratinker_msg"))
+              .networkProtocolVersion(() -> "1").clientAcceptedVersions(s -> true)
+              .serverAcceptedVersions(s -> true).simpleChannel();
+
+      INSTANCE.messageBuilder(PlayerLeftClickEmpty.class, id++, NetworkDirection.PLAY_TO_SERVER)
+              .decoder(PlayerLeftClickEmpty::new)
+              .encoder(PlayerLeftClickEmpty::toByte)
+              .consumerMainThread(PlayerLeftClickEmpty::handle)
+              .add();
       INSTANCE.messageBuilder(ModifierKeyPressPacket.class, id++, NetworkDirection.PLAY_TO_SERVER).decoder(ModifierKeyPressPacket::new).encoder(ModifierKeyPressPacket::toBytes).consumerMainThread(ModifierKeyPressPacket::handle).add();
-      INSTANCE.messageBuilder(SLightningPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT).decoder(SLightningPacket::decode).encoder(SLightningPacket::encode).consumerMainThread(SLightningPacket::consume).add();
       INSTANCE.messageBuilder(RefreshAllModifierConfigSpecs.class, id++, NetworkDirection.PLAY_TO_CLIENT).decoder(RefreshAllModifierConfigSpecs::new).encoder(RefreshAllModifierConfigSpecs::toByte).consumerMainThread(RefreshAllModifierConfigSpecs::handle).add();
    }
 

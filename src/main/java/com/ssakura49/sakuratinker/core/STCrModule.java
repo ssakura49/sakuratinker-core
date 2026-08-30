@@ -7,11 +7,11 @@ import com.ssakura49.sakuratinker.SakuraTinker;
 import com.ssakura49.sakuratinker.core.data.condition.CompatConfigCondition;
 import com.ssakura49.sakuratinker.core.data.condition.ConfigCondition;
 import com.ssakura49.sakuratinker.core.data.condition.GeneralMaterialConfigCondition;
-import com.ssakura49.sakuratinker.core.init.STCrCondition;
-import com.ssakura49.sakuratinker.core.init.STCrItem;
-import com.ssakura49.sakuratinker.core.init.STCrParticleTypes;
-import com.ssakura49.sakuratinker.core.init.STCrRecipe;
-import com.ssakura49.sakuratinker.core.init.STCrTab;
+import com.ssakura49.sakuratinker.core.eventhandler.PlayerClickHandler;
+import com.ssakura49.sakuratinker.core.init.*;
+import com.ssakura49.sakuratinker.core.library.events.LoadRegistryClassEvent;
+import com.ssakura49.sakuratinker.core.library.tools.stats.STToolStats;
+import com.ssakura49.sakuratinker.core.network.PacketHandler;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffect;
@@ -20,6 +20,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -49,6 +50,7 @@ public class STCrModule {
    public static final ModifierDeferredRegister MODIFIERS;
 
    public static void register(IEventBus bus) {
+      bus.post(new LoadRegistryClassEvent());
       STCrItem.ITEMS.register(bus);
       STCrTab.CREATIVE_MODE_TABS.register(bus);
       BLOCKS.register(bus);
@@ -59,6 +61,7 @@ public class STCrModule {
       MENUS.register(bus);
       MODIFIERS.register(bus);
       ENTITIES.register(bus);
+      STCrSound.SOUNDS.register(bus);
       STCrRecipe.RECIPE_SERIALIZERS.register(bus);
       STCrConfig.init();
    }
@@ -77,7 +80,7 @@ public class STCrModule {
                }
             }
 
-         }).build();
+         }).priority(999).build();
          TabSideBarManager.registerCategory(STCrTab.CORE_TAB.getId(), baseCategory);
       });
    }
@@ -86,6 +89,7 @@ public class STCrModule {
    public static void onRegister(RegisterEvent event) {
       if (event.getRegistryKey() == Registries.RECIPE_SERIALIZER) {
          SakuraTinker.LOGGER.info("ST on RegisterEvent");
+         STToolStats.initStats();
          CraftingHelper.register(ConfigCondition.SERIALIZER);
          CraftingHelper.register(CompatConfigCondition.SERIALIZER);
          CraftingHelper.register(GeneralMaterialConfigCondition.SERIALIZER);

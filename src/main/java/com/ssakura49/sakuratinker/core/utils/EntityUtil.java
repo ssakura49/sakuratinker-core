@@ -10,6 +10,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 
 public class EntityUtil {
    public static boolean checkTarget(Projectile projectile, Entity target) {
@@ -60,5 +65,21 @@ public class EntityUtil {
       } else {
          return false;
       }
+   }
+
+   @Nullable
+   public static Entity getEntityLookedAt(Player player, double range) {
+      Level level = player.level();
+      Vec3 eyePos = player.getEyePosition(1.0F);
+      Vec3 lookVec = player.getLookAngle();
+      Vec3 reachVec = eyePos.add(lookVec.scale(range));
+      AABB aabb = player.getBoundingBox().expandTowards(lookVec.scale(range)).inflate(1.0D);
+      EntityHitResult result = ProjectileUtil.getEntityHitResult(
+              player, eyePos, reachVec, aabb,
+              entity -> !entity.isSpectator() && entity.isPickable() && entity != player,
+              range * range
+      );
+
+      return result != null ? result.getEntity() : null;
    }
 }

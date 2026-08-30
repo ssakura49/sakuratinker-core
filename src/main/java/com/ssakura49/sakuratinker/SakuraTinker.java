@@ -34,10 +34,6 @@ import org.objectweb.asm.Type;
 import slimeknights.tconstruct.library.utils.Util;
 
 @Mod("sakuratinker")
-@EventBusSubscriber(
-   modid = "sakuratinker",
-   bus = Bus.MOD
-)
 public class SakuraTinker {
    public static final String MODID = "sakuratinker";
    public static final Logger LOGGER = LogManager.getLogger("sakuratinker");
@@ -59,7 +55,6 @@ public class SakuraTinker {
       PacketHandler.init();
    }
 
-   @SubscribeEvent
    public void onRegisterTiers(RegisterEvent event) {
       if (event.getRegistryKey().equals(Registries.ITEM)) {
          TierSortingRegistry.registerTier(InfinityTiers.instance, ResourceLocation.fromNamespaceAndPath("sakuratinker", "infinity"), List.of(Tiers.NETHERITE), List.of());
@@ -68,11 +63,9 @@ public class SakuraTinker {
 
    }
 
-   @SubscribeEvent
    public void commonSetup(FMLCommonSetupEvent event) {
    }
 
-   @SubscribeEvent
    public void registerSerializers(RegisterEvent event) {
    }
 

@@ -1,4 +1,4 @@
-package com.ssakura49.sakuratinker.core.library.data;
+package com.ssakura49.sakuratinker.core.library.registry.record;
 
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
