@@ -56,6 +56,7 @@ import slimeknights.mantle.registration.deferred.FluidDeferredRegister;
 import slimeknights.mantle.registration.object.FluidObject;
 import slimeknights.mantle.registration.object.ItemObject;
 import slimeknights.tconstruct.common.registration.CastItemObject;
+import slimeknights.tconstruct.library.client.data.spritetransformer.GreyToSpriteTransformer;
 import slimeknights.tconstruct.library.client.data.spritetransformer.IColorMapping;
 import slimeknights.tconstruct.library.client.data.spritetransformer.ISpriteTransformer;
 import slimeknights.tconstruct.library.client.data.spritetransformer.RecolorSpriteTransformer;
@@ -82,10 +83,10 @@ import slimeknights.tconstruct.tools.stats.StatlessMaterialStats;
 
 import static slimeknights.tconstruct.fluids.block.BurningLiquidBlock.createBurning;
 
-public class SimpleMaterialObject {
-   public SimpleMaterialObject(String name, String nameSpace, @Nullable FluidObject<? extends ForgeFlowingFluid> fluidObject, boolean isUnit,
-                               @Nullable ItemObject<? extends Item> itemObject, MaterialInfo materialInfo, ICondition condition,
-                               boolean isSimpleModel, MaterialRenderInfo renderInfo, MaterialSpriteInfo spriteInfo) {
+public class MaterialDefinition {
+   public MaterialDefinition(String name, String nameSpace, @Nullable FluidObject<? extends ForgeFlowingFluid> fluidObject, boolean isUnit,
+                             @Nullable ItemObject<? extends Item> itemObject, MaterialInfo materialInfo, ICondition condition,
+                             boolean isSimpleModel, MaterialRenderInfo renderInfo, MaterialSpriteInfo spriteInfo) {
       this.name = name;
       this.nameSpace = nameSpace;
       this.fluidObject = fluidObject;
@@ -217,11 +218,10 @@ public class SimpleMaterialObject {
       return new MaterialRecipeInfo.MaterialRecipeInfoBuilder(this);
    }
 
-   public SimpleMaterialObject setFluidCustomTexture(){
+   public MaterialDefinition setFluidCustomTexture(){
       this.isFluidTextureCustom = true;
       return this;
    }
-
 
    //材料相关
    public static class MaterialInfo{
@@ -371,6 +371,8 @@ public class SimpleMaterialObject {
       private final Builder parent;
       @Nullable
       private ISpriteTransformer transformer;
+      @Nullable
+      private GreyToSpriteTransformer.Builder spriteTransformerBuilder;
       @Setter
       private boolean variant = false;
 
@@ -391,7 +393,13 @@ public class SimpleMaterialObject {
          this.transformer = transformer;
          return this;
       }
-
+      public MaterialSpriteInfoBuilder addSpriteTexture(int grey, String path) {
+         if (this.spriteTransformerBuilder == null) {
+            this.spriteTransformerBuilder = GreyToSpriteTransformer.builder();
+         }
+         this.spriteTransformerBuilder.addTexture(grey, ResourceLocation.parse(path));
+         return this;
+      }
       public MaterialSpriteInfoBuilder variant() {
          this.setVariant(true);
          return this;
@@ -497,6 +505,9 @@ public class SimpleMaterialObject {
       }
 
       public Builder build() {
+         if (this.spriteTransformerBuilder != null) {
+            this.transformer = this.spriteTransformerBuilder.build();
+         }
          if (transformer == null) {
             throw new IllegalStateException("Material must have a transformer for a sprite provider");
          }
@@ -598,7 +609,7 @@ public class SimpleMaterialObject {
          Arrays.stream(materialRecipeBuilders).forEach(builder->this.extraMaterials.put(builder,null));
          return this;
       }
-      public MaterialRecipeInfo addMetalNugget(@Nullable TagKey<Item> itemTag, @Nullable Supplier<Item> supplier, SimpleMaterialObject object,boolean alreadyHasMoltenRecipes){
+      public MaterialRecipeInfo addMetalNugget(@Nullable TagKey<Item> itemTag, @Nullable Supplier<Item> supplier, MaterialDefinition object, boolean alreadyHasMoltenRecipes){
          if (itemTag==null&&supplier==null) return this;
          var itemIng = itemTag==null?Ingredient.of(supplier.get()):Ingredient.of(itemTag);
          this.extraMaterials.put(
@@ -625,7 +636,7 @@ public class SimpleMaterialObject {
          }
          return this;
       }
-      public MaterialRecipeInfo addMetalBlock(@Nullable TagKey<Item> itemTag, @Nullable Supplier<Item> supplier, SimpleMaterialObject object,boolean alreadyHasMoltenRecipes){
+      public MaterialRecipeInfo addMetalBlock(@Nullable TagKey<Item> itemTag, @Nullable Supplier<Item> supplier, MaterialDefinition object, boolean alreadyHasMoltenRecipes){
          if (itemTag==null&&supplier==null) return this;
          var itemIng = itemTag==null?Ingredient.of(supplier.get()):Ingredient.of(itemTag);
          this.extraMaterials.put(
@@ -704,19 +715,19 @@ public class SimpleMaterialObject {
          return TagKey.create(ForgeRegistries.ITEMS.getRegistryKey(),ResourceLocation.fromNamespaceAndPath("tconstruct","casts/"+(multi?"multi_use":"single_use")+"/"+form));
       }
       public static class MaterialRecipeInfoBuilder{
-         public MaterialRecipeInfoBuilder(SimpleMaterialObject materialObject){
-            this.simpleMaterialObject = materialObject;
-            this.itemPair = new Pair<>(Optional.empty(),simpleMaterialObject.itemObject);
+         public MaterialRecipeInfoBuilder(MaterialDefinition materialObject){
+            this.materialDefinition = materialObject;
+            this.itemPair = new Pair<>(Optional.empty(), materialDefinition.itemObject);
             this.fluidPair = new Pair<>(Optional.empty(),()->{
-               if (simpleMaterialObject.fluidObject != null) return simpleMaterialObject.fluidObject.get();
+               if (materialDefinition.fluidObject != null) return materialDefinition.fluidObject.get();
                return null;
             });
-            this.leftOverPair = new Pair<>(Optional.empty(),simpleMaterialObject.itemObject);
+            this.leftOverPair = new Pair<>(Optional.empty(), materialDefinition.itemObject);
             this.castItemOptional = Optional.empty();
             this.materialValue = 1;
             this.requiredValue = 1;
          }
-         SimpleMaterialObject simpleMaterialObject;
+         MaterialDefinition materialDefinition;
          Pair<Optional<TagKey<Item>>, ItemLike> itemPair;
          Pair<Optional<TagKey<Fluid>>,Supplier<Fluid>> fluidPair;
          Optional<CastItemObject> castItemOptional;
@@ -776,17 +787,18 @@ public class SimpleMaterialObject {
             this.isBasin = true;
             return this;
          }
-         public SimpleMaterialObject build(){
-            simpleMaterialObject.recipeInfo = new MaterialRecipeInfo(this.itemPair,this.fluidPair,
+         public MaterialDefinition build(){
+            materialDefinition.recipeInfo = new MaterialRecipeInfo(this.itemPair,this.fluidPair,
                     this.castItemOptional,this.leftOverPair,this.meltTemp,this.fluidAmount,this.materialValue,
                     this.requiredValue,isBasin);
-            return simpleMaterialObject;
+            return materialDefinition;
          }
       }
    }
 
+
    public static class Builder{
-      SimpleMaterialWrappedRegister register;
+      MaterialsDeferredRegister register;
       String name;
       String nameSpace;
       Supplier<? extends Item> itemSupplier;
@@ -803,7 +815,7 @@ public class SimpleMaterialObject {
       MaterialRenderInfo renderInfo;
       MaterialSpriteInfo spriteInfo;
       Function<FluidDeferredRegister.Builder, FluidObject<? extends ForgeFlowingFluid>> fluidRegFunction;
-      public Builder(String nameSpace,String name,SimpleMaterialWrappedRegister register){
+      public Builder(String nameSpace, String name, MaterialsDeferredRegister register){
          this.name = name;
          this.nameSpace = nameSpace;
          this.register = register;
@@ -888,8 +900,8 @@ public class SimpleMaterialObject {
          this.renderInfo = function.apply(new MaterialId(nameSpace,name));
          return this;
       }
-      public SimpleMaterialObject build(){
-         SimpleMaterialObject object;
+      public MaterialDefinition build(){
+         MaterialDefinition object;
          if (this.itemName==null) this.itemName = name;
          if (this.fluidName==null) this.fluidName = name;
          AtomicBoolean isLoaded = new AtomicBoolean(true);
@@ -901,12 +913,13 @@ public class SimpleMaterialObject {
             if (itemSupplier!=null) itemObj = register.itemRegister.register(itemName,itemSupplier);
             FluidObject<? extends ForgeFlowingFluid> fluidObj = null;
             if (fluidRegFunction!=null) fluidObj = fluidRegFunction.apply(register.fluidRegister.register(fluidName));
-            object = new SimpleMaterialObject(this.name, this.nameSpace, fluidObj,this.isUnit, itemObj, materialInfo,
+            object = new MaterialDefinition(this.name, this.nameSpace, fluidObj,this.isUnit, itemObj, materialInfo,
                     new AndCondition(conditions.toArray(new ICondition[0])),this.isSimpleModel,this.renderInfo,this.spriteInfo);
-            register.entryMap.put(name,object);
+            //register.entryMap.put(name,object);
+            register.putMaterial(name,object);
             return object;
          }
-         object = new SimpleMaterialObject(this.name,this.nameSpace,null,this.isUnit,null,this.materialInfo,
+         object = new MaterialDefinition(this.name,this.nameSpace,null,this.isUnit,null,this.materialInfo,
                  new AndCondition(conditions.toArray(new ICondition[0])),this.isSimpleModel,this.renderInfo,this.spriteInfo);
          register.entryMap.put(name,object);
          return object;

@@ -51,7 +51,7 @@ public class AttackUtil {
    private static final float DEGREE_TO_RADIANS = ((float)Math.PI / 180F);
    private static final AttributeModifier ANTI_KNOCKBACK_MODIFIER;
 
-   public static boolean attackEntity(IToolStackView tool, LivingEntity attackerLiving, InteractionHand hand, Entity targetEntity, DoubleSupplier cooldownFunction, boolean isExtraAttack, EquipmentSlot sourceSlot, boolean setDamage, float damageSet, boolean noToolDamage) {
+   public static boolean attackEntity(IToolStackView tool, LivingEntity attackerLiving, InteractionHand hand, Entity targetEntity, DoubleSupplier cooldownFunction, boolean isExtraAttack, EquipmentSlot sourceSlot, boolean setDamage, float damageSet, float damageModifier, boolean noToolDamage) {
       if (!tool.isBroken() && tool.hasTag(Items.MELEE)) {
          Level level = attackerLiving.level();
 
@@ -77,11 +77,8 @@ public class AttackUtil {
                     && !attackerLiving.isSprinting();
 
             for(ModifierEntry entry : tool.getModifierList()) {
-               Boolean setCritical = ((CriticalAttackModifierHook)entry.getHook(STHooks.CRITICAL_ATTACK)).setCritical(tool, entry, attackerLiving, hand, targetEntity, sourceSlot, fullyCharged, isExtraAttack, isCritical);
-               if (setCritical != null) {
-                  isCritical = setCritical;
-                  break;
-               }
+                isCritical = entry.getHook(STHooks.CRITICAL_ATTACK).setCritical(tool, entry, attackerLiving, hand, targetEntity, sourceSlot, fullyCharged, isExtraAttack, isCritical);
+                break;
             }
 
             ToolAttackContext context = new ToolAttackContext(attackerLiving, attackerPlayer, hand, sourceSlot, targetEntity, targetLiving, isCritical, cooldown, isExtraAttack);
@@ -89,9 +86,9 @@ public class AttackUtil {
             List<ModifierEntry> modifiers = tool.getModifierList();
 
             for(ModifierEntry entry : modifiers) {
-               damage = ((MeleeDamageModifierHook)entry.getHook(ModifierHooks.MELEE_DAMAGE)).getMeleeDamage(tool, entry, context, baseDamage, damage);
+               damage = entry.getHook(ModifierHooks.MELEE_DAMAGE).getMeleeDamage(tool, entry, context, baseDamage, damage);
             }
-
+            damage*=damageModifier;
             if (damage <= 0.0F) {
                return !isExtraAttack;
             } else {
