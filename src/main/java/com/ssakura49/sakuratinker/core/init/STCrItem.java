@@ -33,6 +33,11 @@ public class STCrItem {
 
    public static final RegistryObject<Item> SLAUGHTER = registerMixc("sakuratinker", ITEMS, "slaughter", () -> new Slaughter((new Item.Properties()).stacksTo(1)), false);
 
+   public static final RegistryObject<Item> slime_crystal_earth = registerMixc("sakuratinker", ITEMS, "slime_crystal_earth", () -> new Item(new Item.Properties()), true);
+   public static final RegistryObject<Item> slime_crystal_sky = registerMixc("sakuratinker", ITEMS, "slime_crystal_sky", () -> new Item(new Item.Properties()), true);
+   public static final RegistryObject<Item> slime_crystal_nether = registerMixc("sakuratinker", ITEMS, "slime_crystal_nether", () -> new Item(new Item.Properties()), true);
+
+
 
    public static List<RegistryObject<Item>> getListMisc(String modId) {
       return List.copyOf(LIST_MISC.getOrDefault(modId, new ArrayList<>()));

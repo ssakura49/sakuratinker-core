@@ -59,7 +59,7 @@ public class AttackUtil {
             LivingEntity targetLiving = ToolAttackUtil.getLivingEntity(targetEntity);
             Player attackerPlayer = attackerLiving instanceof Player ? (Player)attackerLiving : null;
 
-            float damage = ToolAttackUtil.getAttributeAttackDamage(tool, attackerLiving, sourceSlot);
+            @SuppressWarnings("removal") float damage = ToolAttackUtil.getAttributeAttackDamage(tool, attackerLiving, sourceSlot);
             if (setDamage) {
                damage = damageSet;
             }

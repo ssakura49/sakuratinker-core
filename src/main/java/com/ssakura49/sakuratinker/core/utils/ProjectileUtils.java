@@ -7,6 +7,7 @@ import com.ssakura49.sakuratinker.core.library.interfaces.projectile.IProjectile
 import com.ssakura49.sakuratinker.core.library.interfaces.projectile.IProjectileKnockBack;
 import java.util.Random;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,6 +30,15 @@ public class ProjectileUtils {
       Vec3 lookDirection = shooter.getLookAngle().normalize();
       Vec3 accelerate = lookDirection.scale(1.0 + strength);
       Vec3 newMovement = movementDirection.add(accelerate).normalize().scale(velocity);
+      projectile.setDeltaMovement(newMovement);
+   }
+
+   public static void homingToward(Entity projectile, Entity target, float strength, float baseRadius) {
+      double velocity = projectile.getDeltaMovement().length();
+      float distance = projectile.distanceTo(target);
+      Vec3 movementDirection = projectile.getDeltaMovement().normalize().scale((double)(1.0F / (1.0F + strength)));
+      Vec3 chasingAccelerate = (new Vec3(target.getX() - projectile.getX(), target.getY() + (double)target.getBbHeight() * (double)0.5F - projectile.getY() - (double)projectile.getBbHeight() * (double)0.5F, target.getZ() - projectile.getZ())).normalize().scale((double)(1.0F + baseRadius / distance));
+      Vec3 newMovement = movementDirection.add(chasingAccelerate).normalize().scale(velocity);
       projectile.setDeltaMovement(newMovement);
    }
 
@@ -123,7 +133,7 @@ public class ProjectileUtils {
          isCritical = criticalInterface.getCritical();
       }
 
-      Random random = new Random();
+      RandomSource random = arrow.random;
       LivingEntity target = (targetEntity instanceof LivingEntity living) ? living : null;
       if (attackerLiving == null) {
          return false;
@@ -153,10 +163,10 @@ public class ProjectileUtils {
                  .getMeleeDamage(tool, entry, context, baseDamage, damage);
       }
 
-      float arrowBase = (arrow instanceof IProjectileDamage pDamage) ? pDamage.getDamage() : 0F;
-      int finalInt = Mth.floor(velocity * (0.8F * damage + arrowBase));
-      finalInt = Mth.clamp(finalInt, 0, Integer.MAX_VALUE);
-      damage = (float) finalInt;
+//      float arrowBase = (arrow instanceof IProjectileDamage pDamage) ? pDamage.getDamage() : 0F;
+//      int finalInt = Mth.floor(velocity * (0.8F * damage + arrowBase));
+//      finalInt = Mth.clamp(finalInt, 0, Integer.MAX_VALUE);
+//      damage = (float) finalInt;
 
       if (arrow instanceof IProjectileCritical critical && critical.getCritical()) {
          long extra = random.nextInt((int)(damage / 2.0F + 2.0F));

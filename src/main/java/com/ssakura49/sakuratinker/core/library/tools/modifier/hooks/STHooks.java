@@ -10,6 +10,7 @@ import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.behavior.Eff
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.behavior.LivingOnDeathModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.behavior.LivingOnPreventDeathModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.behavior.VibrationListeningModifierHook;
+import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.build.AdvancedModifierTraitHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.build.ItemFoilModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.build.ReplaceMaterialModifierHook;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.click.KeyPressModifierHook;
@@ -30,7 +31,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import slimeknights.mantle.data.registry.IdAwareComponentRegistry;
@@ -184,4 +184,11 @@ public class STHooks {
       public void onReceivingVibration(IToolStackView tool, ModifierEntry modifier, Player player, ServerLevel level, EquipmentSlot slot, VibrationContext context) {
       }
    });
+
+   public static final ModuleHook<AdvancedModifierTraitHook> MODIFIER_TRAIT = ModifierHooks.register(
+           SakuraTinker.getResource("modifier_trait"),
+           AdvancedModifierTraitHook.class,
+           AdvancedModifierTraitHook.AllMerger::new,
+           (context, modifier, builder, firstEncounter) -> {}
+   );
 }
