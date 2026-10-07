@@ -1,5 +1,6 @@
 package com.ssakura49.sakuratinker.core.init;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Type;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,16 @@ public class STCrKeys {
          ID_TO_MAPPING.put(key.getFullId(), mapping);
       }
 
+   }
+
+   public static void registerKey(String id, int defaultKey, String category) {
+      ID_TO_MAPPING.put(id, new KeyMapping(
+              id,
+              KeyConflictContext.IN_GAME,
+              InputConstants.Type.KEYSYM,
+              defaultKey,
+              category
+      ));
    }
 
    @Nullable
@@ -54,9 +65,5 @@ public class STCrKeys {
          return this.fullId;
       }
 
-      // $FF: synthetic method
-      private static Keys[] $values() {
-         return new Keys[]{SUMMON, TREASURE_TOGGLE_LOOT, BLOOD_BURN, SELECTED_SLOT};
-      }
    }
 }

@@ -11,6 +11,7 @@ import com.ssakura49.sakuratinker.core.eventhandler.PlayerClickHandler;
 import com.ssakura49.sakuratinker.core.init.*;
 import com.ssakura49.sakuratinker.core.library.events.LoadRegistryClassEvent;
 import com.ssakura49.sakuratinker.core.library.tools.stats.STToolStats;
+import com.ssakura49.sakuratinker.core.library.tools.uuid.ToolUuidCaps;
 import com.ssakura49.sakuratinker.core.network.PacketHandler;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -68,6 +69,7 @@ public class STCrModule {
 
    @SubscribeEvent
    public static void onCommonSetup(FMLCommonSetupEvent event) {
+      ToolUuidCaps.register();
    }
 
    @SubscribeEvent

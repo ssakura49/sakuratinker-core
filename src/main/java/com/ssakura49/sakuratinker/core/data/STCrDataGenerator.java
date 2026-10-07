@@ -2,6 +2,7 @@ package com.ssakura49.sakuratinker.core.data;
 
 import com.ssakura49.sakuratinker.core.data.provider.STCrCurioSlotProvider;
 import com.ssakura49.sakuratinker.core.data.provider.STCrItemModelProvider;
+import com.ssakura49.sakuratinker.core.data.provider.STCrRecipeProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
@@ -26,5 +27,6 @@ public class STCrDataGenerator {
       CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
       generator.addProvider(event.includeClient(), new STCrItemModelProvider(output, helper));
       generator.addProvider(event.includeServer(), new STCrCurioSlotProvider(output,helper,lookupProvider));
+      generator.addProvider(event.includeServer(),new STCrRecipeProvider(output));
    }
 }

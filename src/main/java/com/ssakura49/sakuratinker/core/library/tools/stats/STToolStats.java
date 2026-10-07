@@ -43,6 +43,10 @@ public class STToolStats {
    public static final FloatToolStat INVULNERABLE_TIME = registerFloatStat(new FloatToolStat(name("invulnerable_time"), -10887823, 0.0F, 0.0F, (float)Integer.MAX_VALUE));
    public static final FloatToolStat MOVE_SPEED = registerFloatStat(new FloatToolStat(name("move_speed"), -10887823, 1F, 0F, (float)Integer.MAX_VALUE));
 
+   //后坐力
+   public static final FloatToolStat RECOIL = registerFloatStat(new FloatToolStat(name("recoil"), -10887823, 1.0F, 0.0F, 30.0F));
+   //散布
+   public static final FloatToolStat SPREAD = registerFloatStat(new FloatToolStat(name("spread"), -3135232, 8.0F, 0.5F, 40.0F));
 
    public static void initStats(){
       ST_STATS.forEach(ToolStats::register);

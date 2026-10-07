@@ -13,7 +13,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
-    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    //id 'org.parchmentmc.librarian.forgegradle' version '1.+'
     id 'io.freefair.lombok' version '8.6'
 }
 
@@ -171,13 +171,13 @@ dependencies {
     implementation fg.deobf("slimeknights.mantle:Mantle:1.20.1-1.11.108")
     implementation fg.deobf("slimeknights.tconstruct:TConstruct:1.20.1-3.11.2.206")
     implementation fg.deobf("curse.maven:curios-309927:6418456")
-//    implementation fg.deobf("com.ssakura49.sakura_library:sakura_library:1.20.1-1.0.4")
-    //implementation fg.deobf("com.ssakura49.tinkercuriolib:tinkercuriolib:1.20.1-1.0.3")
-    implementation fg.deobf(files('libs/sakura_library-1.20.1-1.0.4.jar'))
-    implementation fg.deobf(files('libs/tinkercuriolib-1.20.1-1.0.3.jar'))
+    implementation fg.deobf("com.ssakura49.sakura_library:sakura_library:1.20.1-1.0.4")
+    implementation fg.deobf("com.ssakura49.tinkercuriolib:tinkercuriolib:1.20.1-1.0.3")
+//    implementation fg.deobf(files('libs/sakura_library-1.20.1-1.0.4.jar'))
+//    implementation fg.deobf(files('libs/tinkercuriolib-1.20.1-1.0.3.jar'))
      //implementation fg.deobf("blank:sakura_library-1.20.1:1.0.4")
      //implementation fg.deobf("blank:tinkercuriolib-1.20.1:1.0.3")
-    implementation fg.deobf("curse.maven:geckolib-388172:8285794")
+    //implementation fg.deobf("curse.maven:geckolib-388172:8285794")
     //implementation fileTree(dir: 'libs', includes: ['*.jar'])
 
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings

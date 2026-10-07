@@ -1,0 +1,20 @@
+[
+  {
+    "name": "intro",
+    "data": "sections/intro.json",
+    "icon": {
+      "item": "sakuratinker:soul_sakura_book"
+    }
+  },
+  {
+    "condition": {
+      "type": "forge:mod_loaded",
+      "modid": "sakuratinker_tools"
+    },
+    "name": "special_modifiers",
+    "data": "sections/special_modifiers.json",
+    "icon": {
+      "item": "sakuratinker:soul_sakura"
+    }
+  }
+]

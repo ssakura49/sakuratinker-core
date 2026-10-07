@@ -1,6 +1,7 @@
 package com.ssakura49.sakuratinker.mixin;
 
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.STHooks;
+import com.ssakura49.sakuratinker.mixin.accessor.ProjectileAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.TraceableEntity;
@@ -20,10 +21,6 @@ import slimeknights.tconstruct.library.tools.nbt.ModifierNBT;
 
 @Mixin(Projectile.class)
 public abstract class ProjectileMixin extends Entity implements TraceableEntity {
-    @Shadow private boolean hasBeenShot;
-    @Shadow
-    private boolean leftOwner;
-
     public ProjectileMixin(EntityType<?> type, Level level) {
         super(type, level);
     }
@@ -32,15 +29,16 @@ public abstract class ProjectileMixin extends Entity implements TraceableEntity 
         if (isRemoved()) return;
         Projectile projectile = (Projectile) (Object) this;
         if (projectile instanceof AbstractArrow) return;
-        EntityModifierCapability.EntityModifiers cap = projectile.getCapability(EntityModifierCapability.CAPABILITY).orElse(null);
-        if (cap != null && !cap.getModifiers().isEmpty()) {
-            ModifierNBT nbt = cap.getModifiers();
-            ModDataNBT projectileData = PersistentDataCapability.getOrWarn(projectile);
+        projectile.getCapability(EntityModifierCapability.CAPABILITY).ifPresent(cap -> {
+            if (!cap.getModifiers().isEmpty()) {
+                ModifierNBT nbt = cap.getModifiers();
+                ModDataNBT projectileData = PersistentDataCapability.getOrWarn(projectile);
 
-            for (ModifierEntry entry : nbt.getModifiers()) {
-                entry.getHook(STHooks.PROJECTILE_TICK)
-                        .onProjectileTick(nbt, entry, projectile.level(), projectile, projectileData, hasBeenShot, leftOwner);
+                for (ModifierEntry entry : nbt.getModifiers()) {
+                    entry.getHook(STHooks.PROJECTILE_TICK)
+                            .onProjectileTick(nbt, entry, projectile.level(), projectile, projectileData, ((ProjectileAccessor) projectile).getHasBeenShot(), ((ProjectileAccessor) projectile).getLeftOwner());
+                }
             }
-        }
+        });
     }
 }

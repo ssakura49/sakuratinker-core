@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:book"
+    },
+    {
+      "item": "tconstruct:rose_gold_block"
+    },
+    {
+      "item": "minecraft:cherry_leaves"
+    }
+  ],
+  "result": {
+    "item": "sakuratinker:soul_sakura_book"
+  }
+}

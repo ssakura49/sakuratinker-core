@@ -54,7 +54,7 @@ public class AttackUtil {
    public static boolean attackEntity(IToolStackView tool, LivingEntity attackerLiving, InteractionHand hand, Entity targetEntity, DoubleSupplier cooldownFunction, boolean isExtraAttack, EquipmentSlot sourceSlot, boolean setDamage, float damageSet, float damageModifier, boolean noToolDamage) {
       if (!tool.isBroken() && tool.hasTag(Items.MELEE)) {
          Level level = attackerLiving.level();
-
+         
          if (!level.isClientSide && targetEntity.isAttackable() && !targetEntity.isAlliedTo(attackerLiving)) {
             LivingEntity targetLiving = ToolAttackUtil.getLivingEntity(targetEntity);
             Player attackerPlayer = attackerLiving instanceof Player ? (Player)attackerLiving : null;

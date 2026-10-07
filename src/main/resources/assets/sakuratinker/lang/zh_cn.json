@@ -1,8 +1,5 @@
 {
   "itemGroup.sakuratinker.stcr_tab": "魂樱工匠",
-  "itemGroup.sakuratinker.st_material": "魂樱工匠|材料",
-  "itemGroup.sakuratinker.st_tools": "魂樱工匠|工具",
-  "itemGroup.sakuratinker.st_block": "魂樱工匠|方块",
 
   "attribute.name.sakuratinker.reality_suppression": "现实压制伤害",
   "attribute.name.sakuratinker.reality_suppression_resistance": "现实压制抗性",
@@ -1464,6 +1461,9 @@
 
   "modifier.sakuratinker.umbral": "",
   "modifier.sakuratinker.umbral.flavor": "",
-  "modifier.sakuratinker.umbral.description": ""
+  "modifier.sakuratinker.umbral.description": "",
+
+
+  "item.sakuratinker.soul_sakura_book": "魂樱大百科"
 }
 

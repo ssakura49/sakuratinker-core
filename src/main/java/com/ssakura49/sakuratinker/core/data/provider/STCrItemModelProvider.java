@@ -1,5 +1,6 @@
 package com.ssakura49.sakuratinker.core.data.provider;
 
+import com.ssakura49.sakuratinker.core.init.STCrItem;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -25,5 +26,8 @@ public class STCrItemModelProvider extends ItemModelProvider {
    }
 
    protected void registerModels() {
+      generateItemModel(STCrItem.BOOK,"misc");
+      generateItemModel(STCrItem.SLAUGHTER,"misc");
+      generateItemModel(STCrItem.FOX_MASK,"misc");
    }
 }

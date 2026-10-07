@@ -1,6 +1,7 @@
 package com.ssakura49.sakuratinker.core.eventhandler;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ssakura49.sakuratinker.core.client.book.STCrBookData;
 import com.ssakura49.sakuratinker.core.client.gui.item.ToolCustomBarDecorator;
 import com.ssakura49.sakuratinker.core.client.model.FoxCurioModel;
 import com.ssakura49.sakuratinker.core.client.renderer.entity.FoxCurioModelRenderer;
@@ -30,6 +31,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import slimeknights.tconstruct.gadgets.client.FancyItemFrameRenderer;
 import slimeknights.tconstruct.library.tools.item.IModifiable;
+import slimeknights.tconstruct.shared.CommonsClientEvents;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
 import top.theillusivec4.curios.api.client.ICurioRenderer;
@@ -89,5 +91,11 @@ public class ClientEventHandler {
       ForgeRegistries.ITEMS.getValues().stream().filter(item -> item instanceof IModifiable).forEach(item -> {
          event.register(item, ToolCustomBarDecorator.INSTANCE);
       });
+   }
+
+   @SubscribeEvent
+   public static void onClientSetup(FMLClientSetupEvent event){
+      event.enqueueWork(STCrBookData::intiBook);
+      STCrBookData.SOUL_SAKURA_BOOK.fontRenderer = CommonsClientEvents.unicodeFontRender();
    }
 }

@@ -7,8 +7,14 @@
   "mixins": [
     "AbstractArrowMixin",
     "EntityMixin",
+    "InventoryMixin",
     "ItemStackMixin",
     "ProjectileMixin",
+    "TinkerStationBlockEntityMixin",
+    "ToolAttackContextMixin",
+    "ToolAttackUtilMixin",
+    "ToolStackMixin",
+    "accessor.AbstractArrowAccessor",
     "accessor.ProjectileAccessor"
   ],
   "client": [

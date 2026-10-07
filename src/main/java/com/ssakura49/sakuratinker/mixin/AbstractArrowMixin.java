@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.ssakura49.sakura_library.entity.damagesource.LegacyDamageSource;
 import com.ssakura49.sakuratinker.STCrConfig;
 import com.ssakura49.sakuratinker.core.library.tools.modifier.hooks.STHooks;
+import com.ssakura49.sakuratinker.mixin.accessor.AbstractArrowAccessor;
 import com.ssakura49.sakuratinker.mixin.accessor.ProjectileAccessor;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.minecraft.world.damagesource.DamageSource;
@@ -34,29 +35,25 @@ import java.util.function.Supplier;
 public abstract class AbstractArrowMixin{
     @Unique
     private final Supplier<Boolean> ALLOW_PROJECTILE_TICK_INGROUND = STCrConfig.COMMON.ALLOW_PROJECTILE_TICK_INGROUND;
-    @Shadow
-    @Nullable
-    private IntOpenHashSet piercingIgnoreEntityIds;
-    @Shadow protected boolean inGround;
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void tick(CallbackInfo ci) {
-        if (!inGround || ALLOW_PROJECTILE_TICK_INGROUND.get()) {
-            AbstractArrow arrow = (AbstractArrow) (Object) this;
-            EntityModifierCapability.EntityModifiers cap = arrow.getCapability(EntityModifierCapability.CAPABILITY).orElse(null);
+        AbstractArrow arrow = (AbstractArrow) (Object) this;
+        if (!((AbstractArrowAccessor) arrow).getInGround() || ALLOW_PROJECTILE_TICK_INGROUND.get()) {
+            arrow.getCapability(EntityModifierCapability.CAPABILITY).ifPresent(cap -> {
+                if (!cap.getModifiers().isEmpty()) {
+                    ModifierNBT nbt = cap.getModifiers();
+                    ModDataNBT projectileData = PersistentDataCapability.getOrWarn(arrow);
+                    ProjectileAccessor accessor = (ProjectileAccessor) arrow;
+                    boolean hasBeenShot = accessor.getHasBeenShot();
+                    boolean leftOwner = accessor.getLeftOwner();
 
-            if (cap != null && !cap.getModifiers().isEmpty()) {
-                ModifierNBT nbt = cap.getModifiers();
-                ModDataNBT projectileData = PersistentDataCapability.getOrWarn(arrow);
-                ProjectileAccessor accessor = (ProjectileAccessor) arrow;
-                boolean hasBeenShot = accessor.getHasBeenShot();
-                boolean leftOwner = accessor.getLeftOwner();
-
-                for (ModifierEntry entry : nbt.getModifiers()) {
-                    entry.getHook(STHooks.PROJECTILE_TICK)
-                            .onArrowTick(nbt, entry, arrow.level(), arrow, projectileData, hasBeenShot, leftOwner, inGround, piercingIgnoreEntityIds);
+                    for (ModifierEntry entry : nbt.getModifiers()) {
+                        entry.getHook(STHooks.PROJECTILE_TICK)
+                                .onArrowTick(nbt, entry, arrow.level(), arrow, projectileData, hasBeenShot, leftOwner, ((AbstractArrowAccessor) arrow).getInGround(), ((AbstractArrowAccessor) arrow).getPiercingIgnoreEntityIds());
+                    }
                 }
-            }
+            });
         }
     }
 
