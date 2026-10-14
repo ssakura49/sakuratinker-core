@@ -8,6 +8,7 @@
     "AbstractArrowMixin",
     "EntityMixin",
     "InventoryMixin",
+    "ItemStackHandlerMixin",
     "ItemStackMixin",
     "ProjectileMixin",
     "TinkerStationBlockEntityMixin",
@@ -15,7 +16,8 @@
     "ToolAttackUtilMixin",
     "ToolStackMixin",
     "accessor.AbstractArrowAccessor",
-    "accessor.ProjectileAccessor"
+    "accessor.ProjectileAccessor",
+    "curio.CPacketDestroyMixin"
   ],
   "client": [
   ],

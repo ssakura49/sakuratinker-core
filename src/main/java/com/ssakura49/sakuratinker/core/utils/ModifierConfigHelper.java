@@ -1,6 +1,5 @@
 package com.ssakura49.sakuratinker.core.utils;
 
-import com.ssakura49.sakuratinker.STConfig;
 import java.util.List;
 
 import com.ssakura49.sakuratinker.STCrConfig;

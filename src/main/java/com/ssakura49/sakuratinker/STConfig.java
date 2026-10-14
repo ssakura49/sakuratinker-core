@@ -1,4 +1,4 @@
-package com.ssakura49.sakuratinker;
+/*package com.ssakura49.sakuratinker;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -263,15 +263,8 @@ public class STConfig {
 //      }
 //   }
 //
-   static {
-      CONFIG_PATH = FMLPaths.CONFIGDIR.get().resolve("sakuratinker/treasure_modifier.json");
-      //SCHOOL_ATTR_PATH = FMLPaths.CONFIGDIR.get().resolve("sakuratinker/school_attributes.json");
-   }
 
-   @EventBusSubscriber(
-      modid = "sakuratinker",
-      bus = Bus.MOD
-   )
+
    public static class Client {
       public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
       public static final ForgeConfigSpec.ConfigValue<Boolean> NO_MOD_RENDER;
@@ -289,10 +282,6 @@ public class STConfig {
       public static boolean enable_time_stop_ball_renderer;
       public static final ForgeConfigSpec SPEC;
 
-      @SubscribeEvent
-      public static void onLoad(ModConfigEvent event) {
-         update();
-      }
 
       public static void update() {
          no_mod_render = (Boolean)NO_MOD_RENDER.get();
@@ -323,10 +312,6 @@ public class STConfig {
       }
    }
 
-   @EventBusSubscriber(
-      modid = "sakuratinker",
-      bus = Bus.MOD
-   )
    public static class Common {
       public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
       public static final ForgeConfigSpec.ConfigValue<String> SLIME_CRYSTAL_EARTH;
@@ -358,13 +343,16 @@ public class STConfig {
       public static final ForgeConfigSpec.BooleanValue ENABLE_MAX_HEALTH_HEAL;
       public static final ForgeConfigSpec.DoubleValue MAX_HEALTH_HEAL_AMOUNT;
       public static final ForgeConfigSpec.DoubleValue TINKER_ARROW_FIXES;
+
       public static TreasureModifierConfig TREASURE_CONFIG = new TreasureModifierConfig();
       public static final ForgeConfigSpec.DoubleValue TREASURE_MODIFIER_ENERGY_COST;
       public static double treasureEnergyCost;
+
       public static final Map<Pair<ResourceLocation, ResourceLocation>, Integer> energyValueCache = new HashMap();
       public static final Map<ResourceLocation, Integer> capacityCache = new HashMap();
       public static final Map<ResourceLocation, List<TreasureModifierConfig.LootTableEntry>> dimensionLootTablesMap = new HashMap();
       public static final Map<ResourceLocation, Integer> lootTableEnergyCostMap = new HashMap();
+
       public static final ForgeConfigSpec.IntValue LASER_GUN_BASE_ENERGY;
       public static final ForgeConfigSpec.IntValue LASER_GUN_ENERGY_PER_TICK;
       public static final ForgeConfigSpec.DoubleValue LASER_GUN_DAMAGE_PER_TICK;
@@ -414,15 +402,15 @@ public class STConfig {
       public static double tinkerArrowDamageFixes;
       public static final ForgeConfigSpec SPEC;
 
-      @SubscribeEvent
-      public static void onLoad(ModConfigEvent event) {
-         if (event.getConfig().getSpec() == SPEC) {
-            if (!FMLEnvironment.production) {
-               init();
-               STConfig.loadOrCreateTreasureConfig();
-            }
-         }
-      }
+//      @SubscribeEvent
+//      public static void onLoad(ModConfigEvent event) {
+//         if (event.getConfig().getSpec() == SPEC) {
+//            if (!FMLEnvironment.production) {
+//               init();
+//               STConfig.loadOrCreateTreasureConfig();
+//            }
+//         }
+//      }
 
       public static void init() {
          treasureEnergyCost = (Double)TREASURE_MODIFIER_ENERGY_COST.get();
@@ -575,17 +563,10 @@ public class STConfig {
       }
    }
 
-   @EventBusSubscriber(
-      modid = "sakuratinker",
-      bus = Bus.MOD
-   )
    public static class Server {
       public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
       public static final ForgeConfigSpec SPEC;
 
-      @SubscribeEvent
-      public static void onLoad(ModConfigEvent event) {
-      }
 
       public static void init() {
       }
@@ -595,14 +576,8 @@ public class STConfig {
       }
    }
 
-   @EventBusSubscriber(
-      bus = Bus.FORGE
-   )
+
    public static class LoadConfig {
-      @SubscribeEvent
-      public static void onLevelInit(LevelEvent.Load event) {
-         STConfig.Common.init();
-      }
    }
 
    public static class TreasureModifierConfig {
@@ -667,4 +642,4 @@ public class STConfig {
 //         }
 //      }
 //   }
-}
+}*/

@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 @Mixin(value = AbstractArrow.class,priority = 800)
 public abstract class AbstractArrowMixin{
     @Unique
-    private final Supplier<Boolean> ALLOW_PROJECTILE_TICK_INGROUND = STCrConfig.COMMON.ALLOW_PROJECTILE_TICK_INGROUND;
+    private final Supplier<Boolean> ALLOW_PROJECTILE_TICK_INGROUND = STCrConfig.COMMON.ALLOW_PROJECTILE_TICK_INGROUND::get;
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void tick(CallbackInfo ci) {

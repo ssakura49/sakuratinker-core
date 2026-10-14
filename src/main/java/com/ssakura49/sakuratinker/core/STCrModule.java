@@ -64,7 +64,6 @@ public class STCrModule {
       ENTITIES.register(bus);
       STCrSound.SOUNDS.register(bus);
       STCrRecipe.RECIPE_SERIALIZERS.register(bus);
-      STCrConfig.init();
    }
 
    @SubscribeEvent

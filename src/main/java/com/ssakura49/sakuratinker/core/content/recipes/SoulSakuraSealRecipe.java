@@ -1,6 +1,6 @@
 package com.ssakura49.sakuratinker.core.content.recipes;
 
-import com.ssakura49.sakuratinker.STConfig;
+import com.ssakura49.sakuratinker.STCrConfig;
 import com.ssakura49.sakuratinker.SakuraTinker;
 import com.ssakura49.sakuratinker.core.init.STCrModifier;
 import com.ssakura49.sakuratinker.core.init.STCrRecipe;
@@ -52,10 +52,10 @@ public class SoulSakuraSealRecipe implements ITinkerStationRecipe {
       ItemStack input_3 = ItemStack.EMPTY;
       ItemStack goldBlock = ItemStack.EMPTY;
       ItemStack toolPart = ItemStack.EMPTY;
-      Item slime_earth = (Item)STConfig.slime_crystal_earth().get();
-      Item slime_sky = (Item)STConfig.slime_crystal_sky().get();
-      Item slime_nether = (Item)STConfig.slime_crystal_nether().get();
-      Item goldBlockItem = (Item)STConfig.getGoldBlock().get();
+      Item slime_earth = (Item) STCrConfig.SakuraSealConfig.slime_crystal_earth().get();
+      Item slime_sky = (Item)STCrConfig.SakuraSealConfig.slime_crystal_sky().get();
+      Item slime_nether = (Item)STCrConfig.SakuraSealConfig.slime_crystal_nether().get();
+      Item goldBlockItem = (Item)STCrConfig.SakuraSealConfig.getGoldBlock().get();
 
       for(int i = 0; i < inv.getInputCount(); ++i) {
          ItemStack input = inv.getInput(i);
@@ -173,19 +173,19 @@ public class SoulSakuraSealRecipe implements ITinkerStationRecipe {
    }
 
    public ItemStack getSlimeEarthInput() {
-      return new ItemStack((ItemLike)STConfig.slime_crystal_earth().get());
+      return new ItemStack((ItemLike)STCrConfig.SakuraSealConfig.slime_crystal_earth().get());
    }
 
    public ItemStack getSlimeSkyInput() {
-      return new ItemStack((ItemLike)STConfig.slime_crystal_sky().get());
+      return new ItemStack((ItemLike)STCrConfig.SakuraSealConfig.slime_crystal_sky().get());
    }
 
    public ItemStack getSlimeNetherInput() {
-      return new ItemStack((ItemLike)STConfig.slime_crystal_nether().get());
+      return new ItemStack((ItemLike)STCrConfig.SakuraSealConfig.slime_crystal_nether().get());
    }
 
    public ItemStack getGoldBlockInput() {
-      return new ItemStack((ItemLike)STConfig.getGoldBlock().get());
+      return new ItemStack((ItemLike)STCrConfig.SakuraSealConfig.getGoldBlock().get());
    }
 
    public List<ItemStack> getAllToolPartInputs() {
